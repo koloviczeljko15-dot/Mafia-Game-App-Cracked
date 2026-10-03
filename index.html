@@ -117,7 +117,7 @@ function dealOnline(){var o=S.on,list=[];for(var k in S.pick)for(var i=0;i<S.pic
 if(list.length!=o.players.length){ROOM.presence({host:1,code:o.code,state:"lobby"});S.step=11;render();alert("The player count changed. Go back to the lobby and choose roles again.");return}
 shuffle(list);var assign={};S.assign=o.players.map(function(q,i){assign[q.id]=list[i];return{name:q.name,role:list[i]}});S.dead={};o.round=(o.round||0)+1;
 ROOM.presence({host:1,code:o.code,state:"playing",round:o.round,assign:assign}).then(function(){newGame();S.step=4;render()}).catch(function(){alert("Could not deal roles. Check your connection and try again.")})}
-S.chk=window.claude&&claude.use?"wait":"nocl";if(window.claude&&claude.use){claude.use("room").then(function(r){RM=r;S.chk=r?"ok":"null";if(S.step==10)render()}).catch(function(){S.chk="null";if(S.step==10)render()})}
+S.chk=window.claude&&claude.use?"wait":"nocl";if(false){claude.use("room").then(function(r){RM=r;S.chk=r?"ok":"null";if(S.step==10)render()}).catch(function(){S.chk="null";if(S.step==10)render()})}
 
 var S2={};try{S2=JSON.parse(localStorage.getItem("mafia_set")||"{}")}catch(e){}
 S.lang=S2.lang||"en";S.tts=S2.tts!==false;
@@ -200,7 +200,7 @@ h+=bar(S.on?"toLobby":"toNames","start",S.on?"Start":(S.manual?"Choose who is wh
 }else if(S.step==20){
 h='<div class="top"><div class="set"><select id="lang" aria-label="Voice language">'+Object.keys(LN).map(function(c){return'<option value="'+c+'"'+(S.lang==c?" selected":"")+">"+LN[c]+"</option>"}).join("")+'</select><button class="btn alt tiny" data-a="tts" aria-label="Toggle voice">'+(S.tts?"🔊 On":"🔇 Off")+'</button></div><button class="btn alt tiny" data-a="premium">'+(S.prem?"⭐ On":"⭐ Premium")+'</button></div>';
 h+='<div class="reveal" style="padding:36px 0 20px"><div class="big" style="font-size:64px">🎭</div><h1>Mafia Game App</h1><p>The classic party game. One phone runs the night.</p></div>';
-h+='<button class="btn" data-a="localPass" style="width:100%;margin-bottom:4px">🏠 Local game</button><p style="margin:0 0 18px">Everyone plays on this one phone. Enter the names, pick the roles, and they are dealt randomly. Pass the phone around.</p>';h+='<button class="btn" data-a="onlineHome" style="width:100%;margin-bottom:4px">🌐 Online game</button><p style="margin:0 0 18px">Everyone plays on their own phone. Open a lobby, wait while friends join with a 4-digit code, then start with a countdown.</p>';h+='<div style="height:8px"></div><button class="btn alt" data-a="onlineHome" style="width:100%;margin-bottom:4px">🔑 Join a room</button><p style="margin:0">Friend? Enter your name and the 4-digit lobby code from the host.</p>';
+h+='<button class="btn" data-a="localPass" style="width:100%;margin-bottom:4px">🏠 Local game</button><p style="margin:0 0 18px">Everyone plays on this one phone. Enter the names, pick the roles, and they are dealt randomly. Pass the phone around.</p>';h+='<button class="btn" data-a="local" style="width:100%;margin-bottom:4px">🌐 Online game (host)</button><p style="margin:0 0 18px">Friends use their own phones. You enter the names and pick each person\'s role. Each friend gets a 4-digit code.</p>';h+='<div style="height:8px"></div><button class="btn alt" data-a="enterCode" style="width:100%;margin-bottom:4px">🔑 Join a room</button><p style="margin:0">Friend? Type the 4-digit code the host sent you.</p>';
 }else if(S.step==3){
 if(S.cur==null){
 var nr=Object.keys(G.rev).length,all=nr==S.assign.length;

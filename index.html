@@ -84,7 +84,7 @@ var ROLES=[
 {id:"villager",n:"Villager",e:"👥",c:"#8f9ac4",d:"No night powers. Discuss and vote out the Mafia during the day.",multi:1},
 {id:"cupid",n:"Cupid",e:"💘",c:"#e0457b",d:"First night, join two players in love. If one dies, the other dies too."},
 {id:"child",n:"Little Child",e:"👀",c:"#a45cf0",d:"Peek while the Mafia is awake. If the Mafia catches you, you die instead."},
-{id:"jester",n:"Jester",e:"🃏",c:"#b06ad4",d:"You win alone by getting voted out during the day.",min:6},
+{id:"jester",n:"Jester",e:"🃏",c:"#b06ad4",d:"You win alone by getting voted out during the day."},
 {id:"exec",n:"Executioner",e:"⚖️",c:"#e08a3c",d:"You win alone if the town votes out your secret target.",pre:1},
 {id:"mayor",n:"Mayor",e:"🎖️",c:"#2aa7a0",d:"From day 2, reveal yourself: your vote counts twice.",pre:1},
 {id:"godfather",n:"Godfather",e:"🎩",c:"#c43b3b",d:"Lead the Mafia. The Detective sees you as innocent. Only a Framer can expose you.",pre:1},
@@ -111,10 +111,10 @@ function myPeer(){var p=ROOM.peers().filter(function(x){return x.isMe&&x.sameTab
 function hostPeer(c){return ROOM.peers().filter(function(x){return x.presence&&x.presence.host===1&&x.presence.code===c})[0]}
 function roster(){var c=S.on.code;return ROOM.peers().filter(function(x){return x.presence&&x.presence.pn&&x.presence.code===c}).map(function(x){return{id:x.peer,name:String(x.presence.pn)}}).sort(function(a,b){return a.name.localeCompare(b.name)})}
 function watch(){var o=S.on;unsubs.push(ROOM.onPeers(function(){o.me=myPeer();o.players=roster();var chg=false;
-if(!o.host){var h=hostPeer(o.code);if(h){o.seen=true;o.lost=false;var p=h.presence;o.cd=p.state==="countdown"?p.cd:null;if(p.state==="playing"&&p.assign&&p.assign[o.me]&&p.round!==o.round){o.round=p.round;o.role=p.assign[o.me];o.show=false;S.read=false;S.step=12;chg=true}}else if(o.seen)o.lost=true}
+if(!o.host){var h=hostPeer(o.code);if(h){o.seen=true;o.lost=false;var p=h.presence;if(p.state==="playing"&&p.assign&&p.assign[o.me]&&p.round!==o.round){o.round=p.round;o.role=p.assign[o.me];o.show=false;S.read=false;S.step=12;chg=true}}else if(o.seen)o.lost=true}
 if(S.step==11||chg)render()}))}
 function dealOnline(){var o=S.on,list=[];for(var k in S.pick)for(var i=0;i<S.pick[k];i++)list.push(k);
-if(list.length!=o.players.length){ROOM.presence({host:1,code:o.code,state:"lobby"});S.step=11;render();alert("The player count changed. Go back to the lobby and choose roles again.");return}
+if(list.length!=o.players.length){alert("The player count changed. Go back to the lobby and choose roles again.");return}
 shuffle(list);var assign={};S.assign=o.players.map(function(q,i){assign[q.id]=list[i];return{name:q.name,role:list[i]}});S.dead={};o.round=(o.round||0)+1;
 ROOM.presence({host:1,code:o.code,state:"playing",round:o.round,assign:assign}).then(function(){newGame();S.step=4;render()}).catch(function(){alert("Could not deal roles. Check your connection and try again.")})}
 S.chk=window.claude&&claude.use?"wait":"nocl";if(false){claude.use("room").then(function(r){RM=r;S.chk=r?"ok":"null";if(S.step==10)render()}).catch(function(){S.chk="null";if(S.step==10)render()})}
@@ -170,7 +170,7 @@ function render(){
 var h="";
 if(S.step==0){
 h=steps()+"<h1>How many players?</h1><p>Select the number of people joining the game.</p><div class='grid'>";
-for(var i=4;i<=12;i++)h+='<button class="num'+(S.n==i?" sel":"")+'" data-n="'+i+'">'+i+"</button>";
+for(var i=1;i<=12;i++)h+='<button class="num'+(S.n==i?" sel":"")+'" data-n="'+i+'">'+i+"</button>";
 h+="</div><p style='margin-top:18px'>More players (13–50):</p><div class='grid small'>";
 for(i=13;i<=50;i++)h+='<button class="num'+(S.n==i?" sel":"")+'" data-n="'+i+'">'+i+"</button>";
 h+="</div>";
@@ -196,7 +196,7 @@ if(on&&r.multi&&!r.req||on&&r.multi)h+='<div class="step"><button data-m="'+r.id
 h+="</div>"});
 if(S.mode!="pass")h+='<h2 style="margin:6px 0 6px">Who gets which role?</h2><div style="display:flex;gap:8px;margin-bottom:12px"><button class="opt'+(S.manual?"":" sel")+'" data-a="manOff" style="margin:0;text-align:center">🎲 Random</button><button class="opt'+(S.manual?" sel":"")+'" data-a="manOn" style="margin:0;text-align:center">✋ I choose</button></div>';
 h+='<p style="text-align:center"><button class="btn alt" data-a="fill">Auto balance</button> <button class="btn alt" data-a="save">Save this group</button></p>';
-h+=bar(S.on?"toLobby":"toNames","start",S.on?"Start":(S.manual?"Choose who is who":"Start game"),t!=S.n||mafCount()<1||mafCount()>mafMax(S.n));
+h+=bar(S.on?"toLobby":"toNames","start",S.on?"Deal roles":(S.manual?"Choose who is who":"Start game"),t!=S.n||mafCount()<1||mafCount()>mafMax(S.n));
 }else if(S.step==20){
 h='<div class="top"><div class="set"><select id="lang" aria-label="Voice language">'+Object.keys(LN).map(function(c){return'<option value="'+c+'"'+(S.lang==c?" selected":"")+">"+LN[c]+"</option>"}).join("")+'</select><button class="btn alt tiny" data-a="tts" aria-label="Toggle voice">'+(S.tts?"🔊 On":"🔇 Off")+'</button></div><button class="btn alt tiny" data-a="premium">'+(S.prem?"⭐ On":"⭐ Premium")+'</button></div>';
 h+='<div class="reveal" style="padding:36px 0 20px"><div class="big" style="font-size:64px">🎭</div><h1>Mafia Game App</h1><p>The classic party game. One phone runs the night.</p></div>';
@@ -275,9 +275,9 @@ h+='<button class="btn alt" data-a="joinRoom" style="width:100%">Join room</butt
 h+='<div class="bar"><div><button class="btn alt" data-a="restart" style="flex:1">Back</button></div></div>';
 }else if(S.step==11){
 var o=S.on,ps=o.players;
-h="<h1>Room "+o.code+"</h1><p>"+(o.host?"Share this 4-digit code. You moderate and do not get a role.":(o.lost?"The host left the room.":"Waiting for the host to deal roles."))+"</p><div class='pill'>"+ps.length+" joined</div>"+(o.host&&ps.length<1?"<p>Waiting for players to join…</p>":"")+(o.cd?"<div class='rc'><div class='big'>"+o.cd+"</div><p>Starting…</p></div>":"");
+h="<h1>Room "+o.code+"</h1><p>"+(o.host?"Share this 4-digit code. You moderate and do not get a role.":(o.lost?"The host left the room.":"Waiting for the host to deal roles."))+"</p><div class='pill'>"+ps.length+" joined</div>";
 ps.forEach(function(q,i){h+='<div class="pl"><span>'+(i+1)+". "+esc(q.name)+(q.id==o.me?" (you)":"")+"</span></div>"});
-if(o.cd){}else if(o.host){h+=bar("leave","hostRoles","Choose roles",ps.length<1)+"<p>Needs at least 1 player.</p>"}
+if(o.host){h+=bar("leave","hostRoles","Choose roles",ps.length<1)+"<p>Needs at least 1 player.</p>"}
 else h+=bar(0,"leave","Leave room");
 }else if(S.step==12){
 var o2=S.on;if(!o2.show)h='<div class="reveal"><p>'+(o2.code?'Room '+o2.code:(o2.name?'Hi '+esc(o2.name)+'. Tap only if you are '+esc(o2.name):'Your secret role'))+'</p><h1>Your role is ready</h1><div class="rc"><div class="big">🤫</div></div><button class="btn" data-a="showMine" style="width:100%">Show my role</button></div>';else h=roleCard(o2.role,o2.code?"Room "+o2.code:(o2.name?"Only "+esc(o2.name)+" should look":"Only you should look"),"hideMine");
@@ -366,13 +366,7 @@ fill:function(){S.pick=auto(S.n)},
 save:function(){try{localStorage.setItem("mafia_group",JSON.stringify(S.names));S.saved=S.names.slice()}catch(e){}},
 manOn:function(){S.manual=true},manOff:function(){S.manual=false},
 confirmMan:function(){S.codes=null;S.ri=0;S.shown=false;S.dead={};newGame();S.step=3},
-countdown:function(){var o=S.on;o.cd=3;S.step=11;
-function tick(){if(S.on!==o||o.cd==null)return;
-if(o.cd<1){o.cd=null;dealOnline();return}
-ROOM.presence({host:1,code:o.code,state:"countdown",cd:o.cd});render();
-setTimeout(function(){if(S.on===o&&o.cd!=null){o.cd--;tick()}},1000)}
-tick()},
-start:function(){if(S.on&&S.on.host){act.countdown();return}S.codes=null;if(S.manual){S.assign=S.names.map(function(n){return{name:n.trim(),role:""}});S.step=16;return}S.seed=Math.floor(Math.random()*2147483647);S.assign=dealSeed(S.names.map(function(x){return x.trim()}),S.pick,S.seed);S.ri=0;S.shown=false;S.dead={};newGame();S.step=3},
+start:function(){S.codes=null;if(S.manual){S.assign=S.names.map(function(n){return{name:n.trim(),role:""}});S.step=16;return}S.seed=Math.floor(Math.random()*2147483647);S.assign=dealSeed(S.names.map(function(x){return x.trim()}),S.pick,S.seed);S.ri=0;S.shown=false;S.dead={};newGame();S.step=3},
 show:function(){S.shown=true},
 hide:function(){S.shown=false;S.ri++},
 restart:function(){unwatch();S.on=null;S.step=20;S.assign=[]},

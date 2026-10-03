@@ -196,7 +196,7 @@ h+='<p style="text-align:center"><button class="btn alt" data-a="fill">Auto bala
 h+=bar(S.on?"toLobby":"toNames","start",S.on?"Deal roles":(S.manual?"Choose who is who":"Start game"),t!=S.n||mafCount()<1||mafCount()>mafMax(S.n));
 }else if(S.step==20){
 h='<div class="top"><div class="set"><select id="lang" aria-label="Voice language">'+Object.keys(LN).map(function(c){return'<option value="'+c+'"'+(S.lang==c?" selected":"")+">"+LN[c]+"</option>"}).join("")+'</select><button class="btn alt tiny" data-a="tts" aria-label="Toggle voice">'+(S.tts?"🔊 On":"🔇 Off")+'</button></div><button class="btn alt tiny" data-a="premium">'+(S.prem?"⭐ On":"⭐ Premium")+'</button></div>';
-h+='<div class="reveal" style="padding:36px 0 20px"><div class="big" style="font-size:64px">🎭</div><h1>Mafia Game App</h1><p>The classic party game. One phone runs the night.</p></div>';
+h+='<div class="reveal" style="padding:36px 0 20px"><div class="big" style="font-size:64px">🎭</div><h1>Mafia Game App</h1><p>The classic party game. One phone runs the night.</p><p style="font-size:12px;margin:0">Version 5 (host picks roles)</p></div>';
 h+='<button class="btn" data-a="local" style="width:100%;margin-bottom:6px">Host a game</button><p style="margin:0 0 18px">You run the game on your phone and give each friend a private 4-digit code.</p>';h+='<button class="btn alt" data-a="enterCode" style="width:100%;margin-bottom:6px">Enter my code</button><p style="margin:0">Friend? Type the 4-digit code the host gave you.</p>';
 }else if(S.step==3){
 if(S.cur==null){

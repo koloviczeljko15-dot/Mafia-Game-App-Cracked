@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<title>Mafia Game</title>
+<style>
+:root{--bg:#0b1020;--card:#151c34;--line:#26305a;--tx:#e8ecff;--mut:#8f9ac4;--ac:#e0457b;--ok:#4fd1a5;--bl:#4c8dff;--warn:#f2b84b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f1f3fb;--card:#fff;--line:#d5daf0;--tx:#161b33;--mut:#5b648c}}
+:root[data-theme="light"]{--bg:#f1f3fb;--card:#fff;--line:#d5daf0;--tx:#161b33;--mut:#5b648c}
+:root[data-theme="dark"]{--bg:#0b1020;--card:#151c34;--line:#26305a;--tx:#e8ecff;--mut:#8f9ac4}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 Georgia,"Times New Roman",serif;min-height:100vh}
+main{max-width:520px;margin:0 auto;padding:16px 16px 96px}
+h1{font-size:26px;margin:8px 0 4px}h2{font-size:15px;margin:0}
+p{color:var(--mut);margin:4px 0 14px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+.tiny{flex:none!important;padding:5px 10px!important;font-size:13px!important;border-radius:9px!important}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.top select{background:var(--card);border:1px solid var(--line);color:var(--tx);border-radius:9px;padding:5px 6px;font:inherit;font-size:13px;max-width:150px}
+.top .set{display:flex;gap:6px;align-items:center}
+button:focus-visible,input:focus-visible{outline:2px solid var(--bl);outline-offset:2px}
+.steps{display:flex;gap:6px;margin-bottom:10px}
+.steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.steps i.on{background:var(--ac)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.num{padding:16px 0;font-size:22px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.num.sel{border-color:var(--ac);background:var(--ac);color:#fff}
+.small{grid-template-columns:repeat(5,1fr)}.small .num{padding:10px 0;font-size:15px}
+.name{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:4px 12px;margin-bottom:8px}
+.name span{color:var(--mut);min-width:20px}.name span.lb{min-width:52px}.name input{flex:1;background:none;border:0;padding:10px 0;min-width:0}
+.name.dup{border-color:var(--warn)}
+.role{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;opacity:.6}
+.role.on{opacity:1;border-color:var(--bl)}
+.role .dot{width:34px;height:34px;border-radius:9px;flex:none;display:grid;place-items:center;font-size:18px}
+.role .t{flex:1;min-width:0}.role b{display:block}.role small{color:var(--mut);display:block;line-height:1.3}
+.lock{color:var(--warn);font-size:12px}
+.step{display:flex;align-items:center;gap:6px}
+.step button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:none}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line)}
+.bar div{max-width:520px;margin:0 auto;display:flex;gap:8px}
+.btn{flex:1;padding:14px;border-radius:12px;border:0;background:var(--ac);color:#fff;font-weight:bold}
+.btn.alt{background:var(--card);border:1px solid var(--line);color:var(--tx);flex:0 0 auto;padding:14px 16px}
+.btn:disabled{opacity:.4}
+.pill{display:inline-block;padding:6px 12px;border-radius:99px;background:var(--card);border:1px solid var(--line);margin-bottom:12px}
+.pill.ok{color:var(--ok);border-color:var(--ok)}
+.reveal{text-align:center;padding:40px 8px}
+.rc{margin:20px auto;padding:30px 16px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.rc .big{font-size:44px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:20px;z-index:9}
+.modal>div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;max-width:380px;width:100%}
+.modal input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);margin:8px 0}
+.modal .row{display:flex;gap:8px;justify-content:flex-end}
+.modal .row button{padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:none}
+.err{color:var(--warn);min-height:20px;margin:0}
+.pl{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);margin-bottom:8px}
+.pl.dead{opacity:.45;text-decoration:line-through}
+.pl button{border:1px solid var(--line);border-radius:8px;background:none;padding:6px 10px}
+.chk{display:block;padding:10px 0;border-bottom:1px solid var(--line)}
+.chk input{margin-right:10px}
+.tile{padding:20px 0;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:20px}.tile.done{border-color:var(--ok)}
+.opt{display:block;width:100%;text-align:left;padding:14px;border-radius:10px;border:1px solid var(--line);background:var(--card);margin-bottom:8px}.opt.sel{border-color:var(--ac);background:var(--ac);color:#fff}
+.paper{background:#efe6cf;color:#2b2418;border-radius:12px;padding:16px;margin-bottom:12px}.paper h2{margin:0 0 4px}.paper p{color:#2b2418;margin:0}
+.night{background:#05070f;color:#e8ecff;border-radius:16px;padding:8px 12px 1px;margin-bottom:12px}
+.rbox{height:210px;overflow-y:auto;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}.rbox h2{margin:10px 0 2px;font-size:15px}.rbox p{margin:0 0 8px;color:var(--tx)}
+@media (prefers-reduced-motion:no-preference){.rc{animation:pop .25s ease-out}@keyframes pop{from{transform:scale(.94);opacity:0}}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+var CODE="PrmaMrma";
+function ptok(){return"pm-"+CODE.split("").reverse().join("")}
+function loadPrem(){var t=ptok();try{if(localStorage.getItem("mafia_prem")===t)return true}catch(e){}try{if(document.cookie.split("; ").indexOf("mafia_prem="+t)>-1)return true}catch(e){}return false}
+function savePrem(on){var t=ptok();try{if(on)localStorage.setItem("mafia_prem",t);else localStorage.removeItem("mafia_prem")}catch(e){}try{document.cookie="mafia_prem="+(on?t:"")+"; max-age="+(on?31536000:0)+"; path=/; SameSite=Lax"}catch(e){}}
+var ROLES=[
+{id:"mafia",n:"Mafia",e:"🔪",c:"#d6335f",d:"Each night, secretly choose a player to eliminate.",multi:1,req:1},
+{id:"doctor",n:"Doctor",e:"🩺",c:"#2fbf71",d:"Each night, choose one player to protect from the Mafia."},
+{id:"officer",n:"Officer",e:"🛡️",c:"#4c8dff",d:"Each night, choose one player to arrest. They are removed from the game."},
+{id:"villager",n:"Villager",e:"👥",c:"#8f9ac4",d:"No night powers. Discuss and vote out the Mafia during the day.",multi:1},
+{id:"cupid",n:"Cupid",e:"💘",c:"#e0457b",d:"First night, join two players in love. If one dies, the other dies too."},
+{id:"child",n:"Little Child",e:"👀",c:"#a45cf0",d:"Peek while the Mafia is awake. If the Mafia catches you, you die instead."},
+{id:"jester",n:"Jester",e:"🃏",c:"#b06ad4",d:"You win alone by getting voted out during the day."},
+{id:"exec",n:"Executioner",e:"⚖️",c:"#e08a3c",d:"You win alone if the town votes out your secret target.",pre:1},
+{id:"mayor",n:"Mayor",e:"🎖️",c:"#2aa7a0",d:"From day 2, reveal yourself: your vote counts twice.",pre:1},
+{id:"godfather",n:"Godfather",e:"🎩",c:"#c43b3b",d:"Lead the Mafia. The Detective sees you as innocent. Only a Framer can expose you.",pre:1},
+{id:"framer",n:"Framer",e:"🖋️",c:"#d04a8a",d:"Mafia. Frame a player so the Detective sees them as guilty.",pre:1},
+{id:"detective",n:"Detective",e:"🔍",c:"#5b7cff",d:"Each night, investigate a player to learn if they look guilty.",pre:1},
+{id:"tracker",n:"Tracker",e:"🧭",c:"#3fa7d6",d:"Each night, follow a player to see who they visit.",pre:1},
+{id:"bodyguard",n:"Bodyguard",e:"💂",c:"#6b8ef2",d:"Each night, guard a player. If the Mafia attacks them, you die in their place."},
+{id:"escort",n:"Escort",e:"💃",c:"#e06fb0",d:"Each night, distract a player. Their night power does not work that night."},
+{id:"vigilante",n:"Vigilante",e:"🎯",c:"#c9a227",d:"Once per game, shoot a player at night. Choose carefully."},
+{id:"silencer",n:"Silencer",e:"🤐",c:"#a33b52",d:"Mafia. Each night, silence a player. They cannot speak or vote the next day."},
+{id:"survivor",n:"Survivor",e:"🏕️",c:"#7aa05a",d:"You win if you are still alive when the game ends, whoever wins."}
+];
+var R={};ROLES.forEach(function(r){R[r.id]=r});
+var TIPS={mafia:"Agree on a target with your team in silence. In the day, act like a worried villager.",doctor:"Saving yourself is allowed. Try to guess who the Mafia will attack.",officer:"Arresting someone removes them from the game and reveals their role, so pick with care.",villager:"You have no power, but your vote and your voice matter. Watch who defends whom.",cupid:"Pick two players on the first night. If one dies, the other dies too, so think about who you link.",child:"Peeking is risky. If the Mafia catches you, you die. Stay quiet about what you saw.",jester:"Be suspicious, but not so suspicious that the village ignores you. You only win by being voted out.",exec:"Push the village toward your target without making yourself a target.",mayor:"Reveal yourself at the right moment. From day 2 your vote counts twice.",godfather:"The Detective sees you as innocent. Only a Framer can make you look guilty.",framer:"Frame a villager so the Detective sees them as guilty, and let the town do the rest.",detective:"Share what you learn carefully. A Godfather looks innocent and a Framer can mislead you.",tracker:"You learn who someone visited, not why. Use it to catch a lie.",bodyguard:"If you guard the right person you save them, but you die doing it. Guard someone important.",escort:"Distracting a player stops their night power. Block the people the village needs most.",vigilante:"You have one shot for the whole game. A wrong shot hurts the village, so wait for good evidence.",silencer:"Silence a loud villager so they cannot speak or vote tomorrow.",survivor:"Stay alive and stay useful to whoever is winning. Do not make enemies."};
+function goalOf(id){if(isMaf(id))return"Win when the Mafia team equals or outnumbers everyone else alive. Stay hidden and remove villagers.";if(id=="jester")return"Get yourself voted out during the day. You win alone if that happens.";if(id=="exec")return"Get the village to vote out your secret target. You win alone if that happens.";if(id=="survivor")return"Be alive when the game ends. You win whichever side wins.";return"Win with the village by voting out every Mafia member."}
+function roleCard(id,intro,action){var r=R[id];return'<div class="reveal" style="padding:12px 0"><p>'+intro+'</p><div class="big">'+r.e+'</div><h1 style="color:'+r.c+'">'+r.n+'</h1><p style="margin:0 0 6px">Scroll to the bottom and read everything.</p><div id="rolebox" class="rbox"><h2>What you do</h2><p>'+r.d+'</p><h2>Your goal</h2><p>'+goalOf(id)+'</p><h2>Tips</h2><p>'+(TIPS[id]||"")+'</p><h2>Remember</h2><p>Keep your role secret. Do not show your screen to anyone. Do not say your role out loud unless it is part of your plan.</p><h2>Ready?</h2><p>When you have read it all, the button below unlocks. After you tap it, your role is hidden and you cannot check it again.</p></div><button id="memobtn" class="btn" data-a="'+action+'" style="width:100%;margin-top:10px"'+(S.read?"":" disabled")+'>I have memorized my role</button></div>'}
+function checkRead(){var rb=document.getElementById("rolebox");if(!rb||S.read)return;if(rb.scrollTop+rb.clientHeight>=rb.scrollHeight-6){S.read=true;var b=document.getElementById("memobtn");if(b)b.disabled=false}}
+var S={step:20,n:4,names:[],pick:{mafia:1},prem:false,assign:[],ri:0,shown:false,dead:{},modal:false,read:false,err:"",on:null,oerr:""};
+S.prem=loadPrem();try{S.god=localStorage.getItem("mafia_god")==="1"}catch(e){}try{var g=JSON.parse(localStorage.getItem("mafia_group")||"null");if(g)S.saved=g}catch(e){}
+
+var RM=null,ROOM=null,unsubs=[];
+function unwatch(){unsubs.forEach(function(f){try{f()}catch(e){}});unsubs=[];try{ROOM&&ROOM.leave&&ROOM.leave()}catch(e){}ROOM=null}
+function myPeer(){var p=ROOM.peers().filter(function(x){return x.isMe&&x.sameTab})[0];return p?p.peer:null}
+function hostPeer(c){return ROOM.peers().filter(function(x){return x.presence&&x.presence.host===1&&x.presence.code===c})[0]}
+function roster(){var c=S.on.code;return ROOM.peers().filter(function(x){return x.presence&&x.presence.pn&&x.presence.code===c}).map(function(x){return{id:x.peer,name:String(x.presence.pn)}}).sort(function(a,b){return a.name.localeCompare(b.name)})}
+function npPanel(){var o=S.on,np=o.np;if(!np)return"";if(np.ph=="idle")return'<p style="text-align:center">Night actions will show here. Wait for the host.</p>';
+if(!np.to||np.to.indexOf(o.me)<0)return'<p style="text-align:center">Eyes closed. Not your turn.</p>';
+if(np.ph=="blocked")return'<div class="night reveal"><div class="big">\ud83d\udc83</div><h1>You were distracted</h1><p>Your power did not work tonight.</p></div>';
+if(np.ph=="res")return'<div class="night reveal"><h1>'+esc(np.r)+'</h1><p>Memorize it, then wait for the host.</p></div>';
+var dead=o.dead||[],pk=o.picked&&o.picked.r===o.round&&o.picked.n===np.n&&o.picked.k===np.k?o.picked.t:[];
+var h='<div class="night"><div class="reveal" style="padding:16px 0"><h1>'+R[o.role].e+" "+esc(np.t)+"</h1></div>";
+if(!np.need)h+='<button class="opt'+(pk.length?"":" sel")+'" data-np="none">Nobody</button>';
+o.players.forEach(function(q){if(dead.indexOf(q.id)<0&&(np.x||[]).indexOf(q.id)<0)h+='<button class="opt'+(pk.indexOf(q.id)>-1?" sel":"")+'" data-np="'+esc(q.id)+'">'+esc(q.name)+"</button>"});
+return h+"</div>"}
+function pickNp(id){var o=S.on,np=o.np;if(!np||np.ph!="pick"||!ROOM)return;var cur=o.picked&&o.picked.r===o.round&&o.picked.n===np.n&&o.picked.k===np.k?o.picked.t.slice():[];
+if(id=="none")cur=[];else if(np.need==2){var q=cur.indexOf(id);if(q>-1)cur.splice(q,1);else if(cur.length<2)cur.push(id)}else cur=[id];
+o.picked={r:o.round,n:np.n,k:np.k,t:cur};ROOM.presence({pn:S.myname,code:o.code,a:{r:o.round,n:np.n,k:np.k,t:cur.length?cur:["none"]}})}
+function watch(){var o=S.on;unsubs.push(ROOM.onPeers(function(){o.me=myPeer();o.players=roster();var chg=false;
+if(!o.host){var h=hostPeer(o.code);if(h){o.seen=true;o.lost=false;var p=h.presence;if(p.state==="playing"&&p.assign&&p.assign[o.me]&&p.round!==o.round){o.round=p.round;o.role=p.assign[o.me];o.show=false;S.read=false;S.step=12;chg=true}var ns=JSON.stringify([p.np,p.dead]);if(ns!==o.ns){o.ns=ns;o.np=p.np;o.dead=p.dead;if(S.step==12&&!o.show)chg=true}}else if(o.seen)o.lost=true}
+if(o.host&&S.step==5&&G.ph=="pick"){var b=JSON.stringify(G.sel);collectVotes();if(b!==JSON.stringify(G.sel))chg=true}
+if(S.step==11||chg)render()}))}
+function hostPub(extra){var o=S.on;if(!o||!o.host||!ROOM)return;var p={host:1,code:o.code,pn:o.hostName||undefined,state:o.state||"lobby",round:o.round,assign:o.assignMap,dead:S.assign.map(function(q,i){return G.alive&&!G.alive[i]&&q.id?q.id:null}).filter(Boolean)};var st=S.step==5&&G.order&&G.order[G.oi];if(st&&(G.ph=="pick"||G.ph=="blocked"||G.ph=="res")){var to=holders(st.g).map(function(i){return S.assign[i].id}).filter(Boolean);p.np={n:G.night,k:st.k,t:st.t,need:st.need||0,x:st.k=="mafia"?S.assign.filter(function(q){return isMaf(q.role)&&q.id}).map(function(q){return q.id}):[],ph:G.ph,to:to,r:G.ph=="res"?resText(st.k):""}}else if(S.step==5||S.step==6||S.step==7)p.np={n:G.night,ph:"idle"};var j=JSON.stringify(p);if(j===o.lastPub)return;o.lastPub=j;try{ROOM.presence(p)}catch(e){}}
+function collectVotes(){var o=S.on;if(!o||!o.host||S.step!=5||G.ph!="pick")return;var st=G.order[G.oi];if(!st)return;var ids=holders(st.g).map(function(i){return S.assign[i].id}),tally={},got=0,cast=0;
+ROOM.peers().forEach(function(x){var a=x.presence&&x.presence.a;if(!a||a.r!==o.round||a.n!==G.night||a.k!==st.k||ids.indexOf(x.peer)<0)return;got++;(a.t||[]).forEach(function(t){tally[t]=(tally[t]||0)+1});cast++});
+if(!got)return;if(st.k=="mafia")Object.keys(tally).forEach(function(k){var j=S.assign.findIndex(function(q){return q.id===k});if(j>-1&&isMaf(S.assign[j].role))delete tally[k]});var idx=function(id){return S.assign.findIndex(function(q){return q.id===id})};
+if(st.need){var l=Object.keys(tally).sort(function(a,b){return tally[b]-tally[a]}).slice(0,2).map(idx).filter(function(i){return i>-1});if(l.length==2)G.sel=l}
+else{var best=null;Object.keys(tally).forEach(function(k){if(best==null||tally[k]>tally[best])best=k});G.sel=best&&idx(best)>-1&&best!=="none"?[idx(best)]:[]}
+G.votes={got:got,of:ids.length}}
+function dealOnline(){var o=S.on,list=[];for(var k in S.pick)for(var i=0;i<S.pick[k];i++)list.push(k);
+if(list.length!=o.players.length){alert("The player count changed. Go back to the lobby and choose roles again.");return}
+shuffle(list);var assign={};S.assign=o.players.map(function(q,i){assign[q.id]=list[i];return{id:q.id,name:q.name,role:list[i]}});S.dead={};o.round=(o.round||0)+1;o.state="playing";o.assignMap=assign;newGame();S.assign.forEach(function(q,i){G.rev[i]=true});o.lastPub=null;hostPub();S.step=3;S.cur=null;render();Promise.resolve().catch(function(){})}
+S.chk=window.claude&&claude.use?"wait":"nocl";if(true){claude.use("room").then(function(r){RM=r;S.chk=r?"ok":"null";if(S.step==10)render()}).catch(function(){S.chk="null";if(S.step==10)render()})}
+
+var S2={};try{S2=JSON.parse(localStorage.getItem("mafia_set")||"{}")}catch(e){}
+S.lang=S2.lang||"en";S.tts=S2.tts!==false;
+function saveSet(){try{localStorage.setItem("mafia_set",JSON.stringify({lang:S.lang,tts:S.tts}))}catch(e){}}
+var LN={en:"English",bs:"Bosanski / Srpski",es:"Español",de:"Deutsch"};
+var VL={en:["en"],bs:["bs","sr","hr"],es:["es"],de:["de"]};
+var TR={
+en:{close:"Night {n}. Everyone, close your eyes.",day:"The sun has come up. Everyone, wake up!",wake:"{r}, wake up. ",sleep:"{r}, close your eyes.",s:{cupid:["Cupid","Choose two players to fall in love."],escort:["Escort","Choose who to distract."],mafia:["Mafia","Choose who to kill."],framer:["Framer","Choose who to frame."],silencer:["Silencer","Choose who to silence."],doctor:["Doctor","Choose who to save."],bodyguard:["Bodyguard","Choose who to guard."],officer:["Officer","Choose who to arrest."],vigilante:["Vigilante","Choose who to shoot. Once per game."],detective:["Detective","Choose who to investigate."],tracker:["Tracker","Choose who to follow."]}},
+bs:{close:"Noć {n}. Svi zatvorite oči.",day:"Sunce je izašlo. Svi se probudite!",wake:"{r}, probudi se. ",sleep:"{r}, zatvori oči.",s:{cupid:["Kupidon","Izaberi dva igrača koja će se zaljubiti."],escort:["Zavodnica","Izaberi koga ćeš omesti."],mafia:["Mafija","Izaberite koga ćete ubiti."],framer:["Podmetač","Izaberi koga ćeš namjestiti."],silencer:["Utišivač","Izaberi koga ćeš ušutkati."],doctor:["Doktor","Izaberi koga ćeš spasiti."],bodyguard:["Tjelohranitelj","Izaberi koga ćeš čuvati."],officer:["Policajac","Izaberi koga ćeš uhapsiti."],vigilante:["Osvetnik","Izaberi koga ćeš upucati. Samo jednom u igri."],detective:["Detektiv","Izaberi koga ćeš istražiti."],tracker:["Tragač","Izaberi koga ćeš pratiti."]}},
+es:{close:"Noche {n}. Todos, cierren los ojos.",day:"Ha salido el sol. ¡Todos, despierten!",wake:"{r}, despierta. ",sleep:"{r}, cierra los ojos.",s:{cupid:["Cupido","Elige a dos jugadores que se enamorarán."],escort:["Acompañante","Elige a quién distraer."],mafia:["Mafia","Elijan a quién matar."],framer:["Incriminador","Elige a quién incriminar."],silencer:["Silenciador","Elige a quién silenciar."],doctor:["Doctor","Elige a quién salvar."],bodyguard:["Guardaespaldas","Elige a quién proteger."],officer:["Oficial","Elige a quién arrestar."],vigilante:["Justiciero","Elige a quién disparar. Solo una vez."],detective:["Detective","Elige a quién investigar."],tracker:["Rastreador","Elige a quién seguir."]}},
+de:{close:"Nacht {n}. Alle schließen die Augen.",day:"Die Sonne ist aufgegangen. Alle wachen auf!",wake:"{r}, wach auf. ",sleep:"{r}, schließ die Augen.",s:{cupid:["Amor","Wähle zwei Spieler, die sich verlieben."],escort:["Begleiterin","Wähle, wen du ablenkst."],mafia:["Mafia","Wählt, wen ihr tötet."],framer:["Fälscher","Wähle, wen du belastest."],silencer:["Schweiger","Wähle, wen du zum Schweigen bringst."],doctor:["Arzt","Wähle, wen du rettest."],bodyguard:["Leibwächter","Wähle, wen du beschützt."],officer:["Polizist","Wähle, wen du verhaftest."],vigilante:["Rächer","Wähle, wen du erschießt. Nur einmal im Spiel."],detective:["Detektiv","Wähle, wen du untersuchst."],tracker:["Spurenleser","Wähle, wen du verfolgst."]}}};
+var lastSp="";function speak(t,k){if(!S.tts||k===lastSp)return;lastSp=k;try{if(window.speechSynthesis){speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t),ps=VL[S.lang]||["en"],vs=speechSynthesis.getVoices(),v=null;
+for(var a=0;a<ps.length&&!v;a++)v=vs.filter(function(x){return x.lang.replace("_","-").toLowerCase().indexOf(ps[a])==0})[0];
+if(v){u.voice=v;u.lang=v.lang}else u.lang=ps[0];speechSynthesis.speak(u)}}catch(e){}}
+
+var G={rev:{}};S.cur=null;
+function isMaf(r){return r=="mafia"||r=="godfather"||r=="framer"||r=="silencer"}
+var NIGHT=[{k:"cupid",g:["cupid"],t:"Choose two players to fall in love",first:1,need:2},{k:"escort",g:["escort"],t:"Choose who to distract"},{k:"framer",g:["framer"],t:"Choose who to frame"},{k:"silencer",g:["silencer"],t:"Choose who to silence"},{k:"mafia",g:["mafia","godfather","framer","silencer"],t:"Choose who to kill"},{k:"doctor",g:["doctor"],t:"Choose who to save"},{k:"bodyguard",g:["bodyguard"],t:"Choose who to guard"},{k:"officer",g:["officer"],t:"Choose who to arrest"},{k:"vigilante",g:["vigilante"],t:"Choose who to shoot (once per game)"},{k:"detective",g:["detective"],t:"Choose who to investigate"},{k:"tracker",g:["tracker"],t:"Choose who to follow"}];
+function holders(g){var o=[];S.assign.forEach(function(q,i){if(G.alive[i]&&g.indexOf(q.role)>-1)o.push(i)});return o}
+function newGame(){G={alive:S.assign.map(function(){return true}),night:0,rev:{},act:{},lovers:null,sel:[],ph:"close",oi:-1,order:[],rep:null,vph:"pick",vres:[],win:null,vigUsed:false,silenced:null};S.cur=null}
+function die(i){var o=[i];G.alive[i]=false;if(G.lovers&&G.lovers.indexOf(i)>-1){var w=G.lovers[0]==i?G.lovers[1]:G.lovers[0];if(G.alive[w]){G.alive[w]=false;o.push(w)}}return o}
+function checkWin(){var m=0,o=0;S.assign.forEach(function(q,i){if(!G.alive[i])return;if(isMaf(q.role))m++;else o++});if(!m)return"villagers";if(m>=o)return"mafia";return null}
+function visitOf(r){if(r=="cupid")return null;if(r=="mafia"||r=="godfather")return G.act.mafia;return G.act[r]}
+function resText(k){var t=G.act[k];if(t==null)return"";var n=S.assign[t].name;
+if(k=="detective"){var r=S.assign[t].role;return n+" looks "+((r=="mafia"||r=="framer"||r=="silencer"||G.act.framer===t)?"GUILTY":"INNOCENT")}
+var v=visitOf(S.assign[t].role);
+return v==null?n+" stayed home":n+" visited "+S.assign[v].name}
+function isBlocked(st){var b=G.act.escort;if(b==null||st.k=="escort"||st.k=="cupid")return false;var hs=holders(st.g);return hs.length==1&&hs[0]===b}
+function nextStep(){G.votes=null;G.oi++;G.sel=[];G.ph=G.oi>=G.order.length?"wake":"pick";if(G.ph=="pick"&&isBlocked(G.order[G.oi]))G.ph="blocked"}
+function resolve(){var rp={mur:[],arr:[],wed:false,saved:false,sil:null},A=G.act;
+if(A.officer!=null&&G.alive[A.officer]){rp.arr.push(A.officer);die(A.officer).forEach(function(i,k){if(k)rp.mur.push({i:i,heart:1})})}
+if(A.mafia!=null&&G.alive[A.mafia]){var bg=holders(["bodyguard"])[0];
+if(A.doctor===A.mafia)rp.saved=true;
+else if(A.bodyguard===A.mafia&&bg!=null&&G.act.escort!==bg){die(bg).forEach(function(i,k){rp.mur.push({i:i,heart:k>0,guard:k==0})})}
+else die(A.mafia).forEach(function(i,k){rp.mur.push({i:i,heart:k>0})})}
+if(A.vigilante!=null){G.vigUsed=true;if(G.alive[A.vigilante]){if(A.doctor===A.vigilante)rp.saved=true;else die(A.vigilante).forEach(function(i,k){rp.mur.push({i:i,heart:k>0})})}}
+if(A.silencer!=null&&G.alive[A.silencer]){rp.sil=A.silencer;G.silenced=A.silencer}else G.silenced=null;
+if(A.cupid)rp.wed=true;G.rep=rp}
+var $=document.getElementById("app");
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function mafMax(n){return Math.max(1,Math.floor((n-1)/3))}
+function mafCount(){return(S.pick.mafia||0)+(S.pick.godfather||0)+(S.pick.framer||0)+(S.pick.silencer||0)}
+function auto(n){var p={mafia:mafMax(n)};if(n>=4){p.doctor=1;p.officer=1}var t=0;for(var k in p)t+=p[k];if(n>t)p.villager=n-t;return p}
+function total(){var t=0;for(var k in S.pick)t+=S.pick[k];return t}
+function dups(){var s={},d={};S.names.forEach(function(x){var k=x.trim().toLowerCase();if(!k)return;if(s[k])d[k]=1;s[k]=1});return d}
+function namesOk(){var d=dups();return S.names.length==S.n&&S.names.every(function(x){return x.trim()})&&!Object.keys(d).length}
+function steps(){return '<div class="steps">'+[0,1,2].map(function(i){return '<i class="'+(i<=S.step?"on":"")+'"></i>'}).join("")+"</div>"}
+function bar(back,next,nl,dis){return '<div class="bar"><div>'+(back?'<button class="btn alt" data-a="'+back+'">Back</button>':"")+'<button class="btn" data-a="'+next+'"'+(dis?" disabled":"")+">"+nl+"</button></div></div>"}
+function render(){
+var h="";
+if(S.step==0){
+h=steps()+"<h1>How many players?</h1><p>Select the number of people joining the game.</p><div class='grid'>";
+for(var i=1;i<=12;i++)h+='<button class="num'+(S.n==i?" sel":"")+'" data-n="'+i+'">'+i+"</button>";
+h+="</div><p style='margin-top:18px'>More players (13–50):</p><div class='grid small'>";
+for(i=13;i<=50;i++)h+='<button class="num'+(S.n==i?" sel":"")+'" data-n="'+i+'">'+i+"</button>";
+h+="</div>";
+if(S.custom)h+='<h2 style="margin:18px 0 6px">Custom player count</h2><label class="name"><span class="lb">Players</span><input id="ccount" type="number" inputmode="numeric" min="1" max="200" placeholder="1 to 200" value="'+(S.n>50?S.n:"")+'"></label><button class="btn alt" data-a="setCustom" style="width:100%">Use this number</button>';
+h+=bar("menu","toNames","Continue to names");
+
+if(S.saved)h=h.replace("</div><div class=\"bar\">","</div><div class=\"bar\">");
+if(S.saved)h+='<p style="margin-top:16px"><button class="btn alt" data-a="loadGroup" style="width:100%">Load saved group ('+S.saved.length+" players)</button></p>";
+}else if(S.step==1){
+var d=dups();
+h=steps()+"<h1>Enter player names</h1><p>Each name must be unique.</p>";
+for(var j=0;j<S.n;j++){var v=S.names[j]||"";var dp=d[v.trim().toLowerCase()];
+h+='<label class="name'+(dp?" dup":"")+'"><span>'+(j+1)+'</span><input data-i="'+j+'" value="'+esc(v)+'" placeholder="Player '+(j+1)+'" maxlength="20" autocomplete="off"></label>'}
+h+='<p style="text-align:center;margin-top:12px">'+(S.filled?'<button class="btn alt" data-a="clearNames">🗑️ Clear all names</button>':'<button class="btn alt" data-a="autoNames">🎲 Auto fill names</button>')+'</p>';
+h+=bar("toPlayers","toRoles","Continue to roles",!namesOk());
+}else if(S.step==2){
+var t=total();
+h=steps()+"<h1>Choose roles</h1><div class='pill"+(t==S.n?" ok":"")+"'>"+t+" / "+S.n+" roles</div>";
+ROLES.forEach(function(r){
+var on=!!S.pick[r.id],locked=r.pre&&!S.prem;
+h+='<div class="role'+(on?" on":"")+'"><button class="dot" data-r="'+r.id+'" style="background:'+r.c+'33;border:0" aria-label="Toggle '+r.n+'">'+r.e+'</button><div class="t"><b>'+r.n+"</b>"+(locked?'<span class="lock">🔒 Premium</span>':"")+"<small>"+r.d+"</small></div>";
+if(on&&r.multi&&!r.req||on&&r.multi)h+='<div class="step"><button data-m="'+r.id+'" data-d="-1">−</button><b>'+S.pick[r.id]+'</b><button data-m="'+r.id+'" data-d="1">+</button></div>';
+h+="</div>"});
+if(S.mode!="pass"&&!S.on)h+='<h2 style="margin:6px 0 6px">Who gets which role?</h2><div style="display:flex;gap:8px;margin-bottom:12px"><button class="opt'+(S.manual?"":" sel")+'" data-a="manOff" style="margin:0;text-align:center">🎲 Random</button><button class="opt'+(S.manual?" sel":"")+'" data-a="manOn" style="margin:0;text-align:center">✋ I choose</button></div>';
+h+='<p style="text-align:center"><button class="btn alt" data-a="fill">Auto balance</button> <button class="btn alt" data-a="save">Save this group</button></p>';
+h+=bar(S.on?"toLobby":"toNames","start",S.on?"Deal roles":(S.manual?"Choose who is who":"Start game"),t!=S.n||mafCount()<1||mafCount()>mafMax(S.n));
+}else if(S.step==20){
+h='<div class="top"><div class="set"><select id="lang" aria-label="Voice language">'+Object.keys(LN).map(function(c){return'<option value="'+c+'"'+(S.lang==c?" selected":"")+">"+LN[c]+"</option>"}).join("")+'</select><button class="btn alt tiny" data-a="tts" aria-label="Toggle voice">'+(S.tts?"🔊 On":"🔇 Off")+'</button></div><button class="btn alt tiny" data-a="premium">'+(S.prem?"⭐ On":"⭐ Premium")+'</button></div>';
+h+='<div class="reveal" style="padding:36px 0 20px"><div class="big" style="font-size:64px">🎭</div><h1>Mafia Game App</h1><p>The classic party game. One phone runs the night.</p></div>';
+h+='<button class="btn" data-a="localPass" style="width:100%;margin-bottom:8px">🏠 Local game</button>';h+='<button class="btn" data-a="onlineHome" style="width:100%;margin-bottom:8px">🌐 Online game</button>';h+='<div style="height:8px"></div><button class="btn alt" data-a="onlineHome" style="width:100%;margin-bottom:4px">🔑 Join a room</button>';
+}else if(S.step==3){
+if(S.cur==null){
+var nr=Object.keys(G.rev).length,all=nr==S.assign.length;
+h="<h1>Reveal roles</h1><p>Pass the phone to each player. Tap your name to see your secret role.</p><div class='pill"+(all?" ok":"")+"'>"+nr+" / "+S.assign.length+" revealed</div><div class='grid'>";
+S.assign.forEach(function(p,i){h+='<button class="tile'+(G.rev[i]?" done":"")+'" data-t="'+i+'">'+esc(p.name)+(G.rev[i]?" ✓":"")+"</button>"});
+h+="</div>";
+if(S.mode!="pass"&&!S.on){
+h+="<h2 style='margin:18px 0 4px'>Online game: send each friend their code</h2><p style='margin:0 0 8px'>Message each friend ONLY their own code (not in the group chat). They tap Join a room, type it, and see only their role.</p>";h+="<h2 style='margin:12px 0 4px'>Codes</h2><p style='margin:0 0 8px'>Each friend opens this app on their own phone, taps Enter my code, and types their code. Keep the codes private.</p>";
+if(!S.codes||S.codes.length!=S.assign.length)S.codes=S.assign.map(function(q){var ix=ROLES.map(function(r){return r.id}).indexOf(q.role);return String(Math.floor(Math.random()*555)*ROLES.length+ix).padStart(4,"0")});
+S.assign.forEach(function(p,i){h+='<div class="pl"><span>'+esc(p.name)+'</span><b style="letter-spacing:3px">'+S.codes[i]+'</b><button data-sh="'+i+'">Send link</button></div>'});
+}
+h+="<p style='margin-top:14px;text-align:center'>"+(S.manual?"":"<button class='btn alt' data-a='reshuffle'>Shuffle roles</button> ")+"<button class='btn alt' data-a='restart'>New game</button></p>";
+if(all)h+=bar(0,"startNight","Start the night");
+}else{
+var pp=S.assign[S.cur];h=roleCard(pp.role,"Only "+esc(pp.name)+" should look","memo");
+}
+}else if(S.step==5){
+var st=G.order[G.oi];
+if(G.ph=="close")h='<div class="night reveal"><div class="big" style="font-size:60px">🌙</div><h1>Night '+G.night+'</h1><p>Everyone, close your eyes.</p><button class="btn" data-a="nightGo" style="width:100%">Begin</button></div>';
+else if(G.ph=="pick"){var nr2=R[st.k];
+h='<div class="night"><div class="reveal" style="padding:16px 0"><div class="big" style="font-size:44px">'+nr2.e+"</div><h1>"+nr2.n+"</h1><p>"+st.t+"</p>"+(S.on&&S.on.host&&G.votes?"<p>"+G.votes.got+" of "+G.votes.of+" players chose on their phones</p>":"")+"</div>";
+if(!st.need)h+='<button class="opt'+(G.sel.length?"":" sel")+'" data-p="-1">Nobody</button>';
+S.assign.forEach(function(q,i){if(G.alive[i]&&!(st.k=="mafia"&&isMaf(q.role)))h+='<button class="opt'+(G.sel.indexOf(i)>-1?" sel":"")+'" data-p="'+i+'">'+esc(q.name)+"</button>"});
+h+='<p style="text-align:center"><button class="btn alt tiny" data-a="say">🔊 Repeat</button></p></div>'+bar(0,"confirm","Confirm",st.need&&G.sel.length!=st.need);
+}else if(G.ph=="blocked"){h='<div class="night reveal"><div class="big">💃</div><h1>You were distracted</h1><p>Your power did not work tonight.</p><button class="btn" data-a="resDone" style="width:100%">Done, close your eyes</button></div>'}else if(G.ph=="res"){h='<div class="night reveal"><div class="big">'+(st.k=="detective"?"🔍":"🧭")+"</div><h1>"+esc(resText(st.k))+"</h1><button class='btn' data-a='resDone' style='width:100%'>Done, close your eyes</button></div>"}
+else h='<div class="reveal"><div class="big" style="font-size:60px">☀️</div><h1>The sun has come up</h1><p>Everyone, wake up!</p><button class="btn" data-a="toReport" style="width:100%">Go to news report</button></div>';
+}else if(S.step==6){
+var rp=G.rep;
+h="<div class='paper'><p>Morning edition</p><h1>"+(rp.mur.length?"Tragedy in the village":"Peaceful night in the village")+"</h1></div>";
+h+="<div class='paper'><h2>Murders</h2>";
+if(rp.mur.length)rp.mur.forEach(function(m){h+="<p>"+esc(S.assign[m.i].name)+(m.heart?" died of a broken heart":m.guard?" died protecting someone":" was killed")+". Role: <b>"+R[S.assign[m.i].role].n+"</b></p>"});else h+="<p>"+(rp.saved?"Someone was attacked, but a life was saved.":"No murders were reported last night.")+"</p>";
+h+="</div><div class='paper'><h2>Arrests</h2>";
+if(rp.arr.length)rp.arr.forEach(function(i){h+="<p>"+esc(S.assign[i].name)+" was taken into custody. Role: <b>"+R[S.assign[i].role].n+"</b></p>"});else h+="<p>No arrests were made.</p>";
+h+="</div><div class='paper'><h2>Weddings</h2><p>"+(rp.wed?"Wedding bells rang last night.":"No wedding bells rang last night.")+"</p></div>"+(rp.sil!=null&&G.alive[rp.sil]?"<div class='paper'><h2>Silenced</h2><p>"+esc(S.assign[rp.sil].name)+" cannot speak or vote today.</p></div>":"")+bar(0,"toVote","Go to village vote");
+}else if(S.step==7){
+if(G.vph=="pick"){
+h="<h1>Village vote</h1><p>Discuss, then tap the player the village voted out.</p><button class='opt"+(G.sel.length?"":" sel")+"' data-p='-1'>No one</button>";
+S.assign.forEach(function(q,i){if(G.alive[i])h+='<button class="opt'+(G.sel.indexOf(i)>-1?" sel":"")+'" data-p="'+i+'">'+esc(q.name)+"</button>"});
+h+=bar(0,"voteOut","Confirm vote");
+}else{var vo=G.vres;h='<div class="reveal"><h1>'+(vo.length?esc(S.assign[vo[0]].name)+" is out":"No one was voted out")+"</h1>";
+vo.forEach(function(i,k){h+="<div class='rc'><div class='big'>"+R[S.assign[i].role].e+"</div><h2>"+esc(S.assign[i].name)+(k?" (broken heart)":"")+" was a "+R[S.assign[i].role].n+"</h2></div>"});
+h+="<button class='btn' data-a='afterVote' style='width:100%'>Continue</button></div>"}
+}else if(S.step==8){
+var wn=G.win,tt={villagers:["🛡️","Villagers win!","Justice has been served."],mafia:["🔪","Mafia wins!","The village has fallen."],jester:["🃏","Jester wins!","They wanted to be voted out."]}[wn];
+h='<div class="reveal"><div class="big" style="font-size:60px">'+tt[0]+"</div><h1>"+tt[1]+"</h1><p>"+tt[2]+"</p><div class='paper' style='text-align:left'><h2>Everyone's role</h2>";
+S.assign.forEach(function(q){h+="<p>"+R[q.role].e+" "+esc(q.name)+": "+R[q.role].n+"</p>"});
+S.assign.forEach(function(q,i){if(q.role=="survivor"&&G.alive[i])h+="<p><b>"+esc(q.name)+" the Survivor also wins!</b></p>"});
+h+="</div><button class='btn' data-a='again' style='width:100%;margin-bottom:8px'>Play again</button><button class='btn alt' data-a='restart' style='width:100%'>New game</button></div>";
+}else if(S.step==16){
+var cnt={};S.assign.forEach(function(q){if(q.role)cnt[q.role]=(cnt[q.role]||0)+1});var okm=S.assign.every(function(q){return q.role})&&Object.keys(S.pick).every(function(k){return (cnt[k]||0)==S.pick[k]});
+h="<h1>Choose who is who</h1><p>Pick a role for each player. Each role must be used exactly as many times as you chose.</p>";
+Object.keys(S.pick).forEach(function(k){h+="<span class='pill"+((cnt[k]||0)==S.pick[k]?" ok":"")+"' style='margin-right:6px'>"+R[k].e+" "+(cnt[k]||0)+"/"+S.pick[k]+"</span>"});
+S.assign.forEach(function(q,i){h+="<label class='name'><span class='lb' style='min-width:90px'>"+esc(q.name)+"</span><select class='asel' data-ai='"+i+"' style='flex:1;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:8px'><option value=''>Choose…</option>"+Object.keys(S.pick).map(function(k){return "<option value='"+k+"'"+(q.role==k?" selected":"")+">"+R[k].e+" "+R[k].n+"</option>"}).join("")+"</select></label>"});
+h+=bar("toRoles","confirmMan","Confirm",!okm);
+}else if(S.step==17){
+h="<div class='reveal'><div class='big'>🔒</div><h1>Role already viewed</h1><p>This link has been used on this device. If you forgot your role, ask the host.</p></div>";
+}else if(S.step==15){
+h="<h1>Find your role</h1><p>Type your name exactly as the host entered it. Make sure nobody is looking.</p><label class='name'><span class='lb'>Name</span><input id='fname' placeholder='Your name' maxlength='20' autocomplete='off'></label><p class='err'>"+esc(S.oerr)+"</p><button class='btn' data-a='useName' style='width:100%'>Show my role</button>";
+}else if(S.step==14){
+h="<h1>Join a room</h1><p>Type the 4-digit code the host gave you. Make sure nobody is looking.</p><label class='name'><span class='lb'>Code</span><input id='pcode' placeholder='4-digit code' inputmode='numeric' maxlength='4' autocomplete='off'></label><p class='err'>"+esc(S.oerr)+"</p><button class='btn' data-a='useCode' style='width:100%'>Show my role</button><div class='bar'><div><button class='btn alt' data-a='restart' style='flex:1'>Back</button></div></div>";
+}else if(S.step==10){
+h="<h1>Play online</h1><p>This phone hosts and moderates. Everyone else joins on their own phone with the 4-digit room code.</p>";
+if(!RM){var cm={wait:"Checking your sign-in…",nocl:"Check result: this is a local copy of the file, not the published page. Open the published link below in your browser instead.",null:"Check result: the page opened from Claude, but online rooms are not available for this account or view. If you are signed in, the page owner may need to invite or share the page with you."}[S.chk]||"";
+h+="<p class='err'>"+cm+"</p>";
+if(S.chk=="nocl")h+="<a class='btn' href='https://claude.ai/artifact/UVA2VZAq1fX89NYSds3yfK' target='_blank' rel='noopener' style='display:block;text-align:center;text-decoration:none;margin-bottom:8px'>Open the published page</a>";
+else h+="<a class='btn alt' href='https://claude.ai/login' target='_blank' rel='noopener' style='display:block;text-align:center;text-decoration:none;margin-bottom:8px'>Not signed in? Sign in to Claude with Google</a>";
+h+="<button class='btn alt' onclick='location.reload()' style='width:100%'>Check again</button>"}
+else{h+='<button class="btn" data-a="createRoom" style="width:100%;margin-bottom:6px">Host a new room</button><p style="margin:0 0 18px">No name needed. This device is the host.</p>';
+h+='<h2 style="margin:0 0 8px">Join a room</h2><label class="name"><span class="lb">Name</span><input id="myname" placeholder="Your name" maxlength="20" autocomplete="off" value="'+esc(S.myname||"")+'"></label>';
+h+='<label class="name"><span class="lb">Code</span><input id="rcode" placeholder="4-digit code" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" value="'+esc(S.jcode||"")+'"></label>';
+h+='<button class="btn alt" data-a="joinRoom" style="width:100%">Join room</button><p class="err" style="margin-top:10px">'+esc(S.oerr)+"</p>"}
+h+='<div class="bar"><div><button class="btn alt" data-a="restart" style="flex:1">Back</button></div></div>';
+}else if(S.step==11){
+var o=S.on,ps=o.players;
+h="<h1>Room "+o.code+"</h1><p>"+(o.host?"Share this 4-digit code. You moderate and do not get a role.":(o.lost?"The host left the room.":"Waiting for the host to deal roles."))+"</p><div class='pill'>"+ps.length+" joined</div>";
+ps.forEach(function(q,i){h+='<div class="pl"><span>'+(i+1)+". "+esc(q.name)+(q.id==o.me?" (you)":"")+"</span></div>"});
+if(o.host&&S.god)h+=o.hostName?"<p>You are playing as <b>"+esc(o.hostName)+"</b> and can see everyone's role.</p>":'<label class="name"><span class="lb">Play too</span><input id="hname" placeholder="Your name" maxlength="20" autocomplete="off" value="'+esc(S.hname||"")+'"></label><button class="btn alt" data-a="hostPlay" style="width:100%;margin-bottom:8px">Join as a player</button>';
+if(o.host){h+=bar("leave","hostRoles","Choose roles",ps.length<1)+"<p>Needs at least 1 player.</p>"}
+else h+=bar(0,"leave","Leave room");
+}else if(S.step==12){
+var o2=S.on;if(!o2.show)h='<div class="reveal"><p>'+(o2.code?'Room '+o2.code:(o2.name?'Hi '+esc(o2.name)+'. Tap only if you are '+esc(o2.name):'Your secret role'))+'</p><h1>Your role is ready</h1><div class="rc"><div class="big">🤫</div></div><button class="btn" data-a="showMine" style="width:100%">Show my role</button></div>'+(o2.code?npPanel():"");else h=roleCard(o2.role,o2.code?"Room "+o2.code:(o2.name?"Only "+esc(o2.name)+" should look":"Only you should look"),"hideMine");
+}else{
+h="<h1>Game on</h1><p>Tap a player when they are out.</p>";
+S.assign.forEach(function(p,i){h+='<div class="pl'+(S.dead[i]?" dead":"")+'"><span>'+esc(p.name)+(S.dead[i]?" — "+R[p.role].n:"")+'</span><button data-x="'+i+'">'+(S.dead[i]?"Revive":"Out")+"</button></div>"});
+var ids={};S.assign.forEach(function(p,i){if(!S.dead[i])ids[p.role]=1});
+var order=["cupid","mafia","godfather","framer","doctor","officer","detective","tracker","child"].filter(function(x){return S.assign.some(function(p){return p.role==x})});
+h+="<h2 style='margin:18px 0 6px'>Night order</h2>";
+order.forEach(function(x){h+='<label class="chk"><input type="checkbox">'+R[x].e+" "+R[x].n+" wakes"+(ids[x]?"":" (all out — call anyway)")+"</label>"});
+h+="<p style='margin-top:12px'>Day: discuss, then vote. Tap Out for the player voted off.</p>"+bar(0,"restart","New game");
+}
+if(S.god&&S.on&&S.on.host&&S.assign.length&&(S.step==3||S.step==5||S.step==6||S.step==7||S.step==8)){h+='<details class="paper" style="margin-top:12px"><summary><b>\ud83d\udc41 God view</b></summary>';S.assign.forEach(function(q,i){var al=G.alive&&G.alive[i]!==false;h+="<p"+(al?"":' style="opacity:.5;text-decoration:line-through"')+">"+R[q.role].e+" "+esc(q.name)+": "+R[q.role].n+(q.id&&S.on.me===q.id?" (you)":"")+"</p>"});var ac=[];Object.keys(G.act||{}).forEach(function(k){var v=G.act[k];if(v==null)return;var n=[].concat(v).map(function(i){return S.assign[i]?S.assign[i].name:"?"}).join(" + ");ac.push(R[k]?R[k].e+" "+R[k].n+" \u2192 "+esc(n):esc(k)+" \u2192 "+esc(n))});if(ac.length)h+="<p><b>Tonight</b></p><p>"+ac.join("</p><p>")+"</p>";h+="</details>"}
+if(S.modal)h+=S.prem?'<div class="modal"><div><h2>Premium is on</h2><p>Executioner, Mayor, Godfather, Framer, Detective and Tracker are unlocked.</p><div class="row"><button data-a="unpremium">Turn off premium</button><button data-a="closeM">Close</button></div></div></div>':'<div class="modal"><div><h2>Premium</h2><p>Enter your code to unlock Executioner, Mayor, Godfather, Framer, Detective and Tracker.</p><input id="code" placeholder="Premium code" autocomplete="off" autocapitalize="off"><p class="err">'+S.err+'</p><div class="row"><button data-a="closeM">Not now</button><button data-a="unlock" style="background:var(--ac);color:#fff;border:0">Redeem</button></div></div></div>';
+if(S.step==5){var T=TR[S.lang]||TR.en,sp="",cs=G.order[G.oi],pv=G.ph=="wake"?G.order[G.order.length-1]:G.order[G.oi-1];
+var slp=(pv&&(G.oi>0||G.ph=="wake")&&T.s[pv.k])?T.sleep.replace("{r}",T.s[pv.k][0])+" ":"";
+if(G.ph=="close")sp=T.close.replace("{n}",G.night);else if((G.ph=="pick"||G.ph=="blocked")&&cs&&T.s[cs.k])sp=slp+T.wake.replace("{r}",T.s[cs.k][0])+T.s[cs.k][1];else if(G.ph=="wake")sp=slp+T.day;
+if(sp)speak(sp,G.ph+G.oi+"-"+G.night+S.lang)}
+var f=document.activeElement,fi=f&&f.dataset&&f.dataset.i,pos=f&&f.selectionStart;
+$.innerHTML=h;setTimeout(checkRead,30);if(S.on&&S.on.host)hostPub();
+if(fi!==undefined&&fi!==null){var el=$.querySelector('input[data-i="'+fi+'"]');if(el){el.focus();try{el.setSelectionRange(pos,pos)}catch(e){}}}
+if(S.modal){var c=document.getElementById("code");if(c)c.focus()}
+}
+function enc(str,k){var b=new TextEncoder().encode(str),h=k.toString(16).padStart(2,"0");for(var i=0;i<b.length;i++)h+=(b[i]^k).toString(16).padStart(2,"0");return h}
+function dec(h){var k=parseInt(h.slice(0,2),16),b=[];for(var i=2;i<h.length;i+=2)b.push(parseInt(h.substr(i,2),16)^k);return new TextDecoder().decode(new Uint8Array(b))}
+function shareRole(i){var q=S.assign[i],k=1+Math.floor(Math.random()*254),u=location.href.split("#")[0]+"#p="+enc(q.name+"|"+q.role,k),t="Mafia: private link for "+q.name+". Open it alone, memorize your role, keep it secret.";
+if(navigator.share){navigator.share({title:"Mafia",text:t,url:u}).catch(function(){})}else{try{navigator.clipboard.writeText(t+" "+u);alert("Link copied. Send it privately to "+q.name+".")}catch(e){prompt("Copy this link for "+q.name,u)}}}
+function prng(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function dealSeed(names,pick,seed){var l=[];for(var k in pick)for(var i=0;i<pick[k];i++)l.push(k);var r=prng(seed);for(var x=l.length-1;x>0;x--){var j=Math.floor(r()*(x+1)),t=l[x];l[x]=l[j];l[j]=t}return names.map(function(n,i){return{name:n,role:l[i]}})}
+function gameLink(){var o={s:S.seed,n:S.assign.map(function(q){return q.name}),p:S.pick};return location.href.split("#")[0]+"#g="+encodeURIComponent(JSON.stringify(o))}
+function shareGame(){var u=gameLink(),t="Mafia game: open this link on your own phone, type your name, and see your secret role.";if(navigator.share){navigator.share({title:"Mafia",text:t,url:u}).catch(function(){})}else{try{navigator.clipboard.writeText(t+" "+u);alert("Link copied. Paste it in your group chat.")}catch(e){prompt("Copy this link",u)}}}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function syncNames(){while(S.names.length<S.n)S.names.push("");S.names.length=S.n}
+var act={
+menu:function(){S.step=20},
+shareGame:function(){shareGame()},
+useName:function(){var v=(document.getElementById('fname').value||'').trim().toLowerCase();var g=S.game,ix=-1;g.n.forEach(function(n,i){if(n.trim().toLowerCase()==v)ix=i});if(ix<0){S.oerr='Name not found. Type it exactly as the host entered it.';return}S.on={code:'',host:false,role:dealSeed(g.n,g.p,g.s)[ix].role,show:false};S.oerr='';S.read=false;S.step=12},
+enterCode:function(){S.oerr='';S.step=14},
+useCode:function(){var v=(document.getElementById('pcode').value||'').replace(/\D/g,'');var n=+v;if(v.length!=4||n>554*ROLES.length+ROLES.length-1){S.oerr='That code is not valid.';return}S.on={code:'',host:false,role:ROLES[n%ROLES.length].id,show:false};S.oerr='';S.read=false;S.step=12},
+local:function(){S.on=null;S.mode='host';S.manual=true;S.step=0},
+localPass:function(){S.on=null;S.mode='pass';S.manual=false;S.step=0},
+premium:function(){S.modal=true;S.err=""},
+memo:function(){G.rev[S.cur]=true;S.cur=null;S.read=false},
+reshuffle:function(){S.codes=null;S.seed=Math.floor(Math.random()*2147483647);S.assign=dealSeed(S.assign.map(function(q){return q.name}),S.pick,S.seed);newGame()},
+startNight:function(){G.night++;G.act={};G.sel=[];G.oi=-1;G.order=NIGHT.filter(function(x){return(!x.first||G.night==1)&&holders(x.g).length&&!(x.k=="vigilante"&&G.vigUsed)});G.ph="close";S.step=5},
+nightGo:function(){nextStep()},
+confirm:function(){var st=G.order[G.oi];if(st.need){if(G.sel.length!=st.need)return;G.act.cupid=G.sel.slice();G.lovers=G.sel.slice();nextStep();return}
+var t=G.sel.length?G.sel[0]:null;G.act[st.k]=t;if(t!=null&&(st.k=="detective"||st.k=="tracker"))G.ph="res";else nextStep()},
+resDone:function(){nextStep()},
+toReport:function(){resolve();S.step=6},
+toVote:function(){var w=checkWin();if(w){G.win=w;S.step=8}else{G.vph="pick";G.sel=[];S.step=7}},
+voteOut:function(){G.vres=G.sel.length?die(G.sel[0]):[];G.vph="res"},
+afterVote:function(){if(G.vres.length&&S.assign[G.vres[0]].role=="jester"){G.win="jester";S.step=8;return}var w=checkWin();if(w){G.win=w;S.step=8}else act.startNight()},
+again:function(){if(S.on){dealOnline();return}act.reshuffle();S.step=3},
+
+onlineHome:function(){S.step=10;S.oerr=""},
+createRoom:function(){if(!RM)return;S.oerr="Creating room…";var tries=0;
+function attempt(){var code=String(Math.floor(1000+Math.random()*9000));
+Promise.resolve(RM.join("mafia"+code)).then(function(r){ROOM=r;setTimeout(function(){
+if(ROOM.peers().some(function(x){return x.presence&&x.presence.host===1&&!x.isMe})&&tries++<5){try{ROOM.leave()}catch(e){}ROOM=null;attempt();return}
+S.on={code:code,host:true,me:myPeer(),players:[],role:null,show:false};ROOM.presence({host:1,code:code,state:"lobby"});S.oerr="";S.step=11;watch();S.on.players=roster();render()},1500)}).catch(function(){ROOM=null;S.oerr="Could not create the room. Open the app from its published link.";render()})}
+attempt()},
+joinRoom:function(){if(!RM)return;var nm=(document.getElementById("myname").value||"").trim(),code=(document.getElementById("rcode").value||"").replace(/\D/g,"");
+if(!nm||code.length!=4){S.oerr="Enter your name and the 4-digit code.";return}
+S.myname=nm;S.jcode=code;S.oerr="Looking for the room…";
+Promise.resolve(RM.join("mafia"+code)).then(function(r){ROOM=r;ROOM.presence({pn:nm,code:code});setTimeout(function(){var h=hostPeer(code);
+if(!h||h.presence.state!=="lobby"){try{ROOM.leave()}catch(e){}ROOM=null;S.oerr="No open room with that code.";render();return}
+S.on={code:code,host:false,me:myPeer(),players:[],role:null,show:false};S.oerr="";S.step=11;watch();S.on.players=roster();render()},1800)}).catch(function(){ROOM=null;S.oerr="Could not join. Check the code and your connection.";render()})},
+hostPlay:function(){var v=(S.hname||"").trim();if(!v||!S.on)return;S.on.hostName=v;S.on.lastPub=null;hostPub();setTimeout(function(){S.on.players=roster();render()},400)},
+hostRoles:function(){var o=S.on;S.n=o.players.length;S.names=o.players.map(function(q){return q.name});S.pick=auto(S.n);S.step=2},
+toLobby:function(){S.step=11},
+leave:function(){unwatch();S.on=null;S.step=20},
+tts:function(){S.tts=!S.tts;saveSet();if(!S.tts)try{speechSynthesis.cancel()}catch(e){}},
+say:function(){lastSp=""},
+showMine:function(){S.on.show=true;S.read=false},hideMine:function(){S.on.show=false;S.read=false;if(S.on.key){try{localStorage.setItem('mafia_seen_'+S.on.key,'1')}catch(e){}S.step=17}},
+
+toPlayers:function(){S.step=0},
+toNames:function(){syncNames();S.step=1},
+setCustom:function(){var v=parseInt(document.getElementById("ccount").value,10);if(!v||v<1||v>200){alert("Enter a number from 1 to 200.");return}S.n=v;S.pick={}},
+autoNames:function(){var pool=["Alex","Sam","Jordan","Riley","Morgan","Casey","Taylor","Jamie","Avery","Quinn","Drew","Blake","Cameron","Dana","Elliot","Finn","Gray","Harper","Indy","Jules","Kai","Lee","Max","Noel","Parker","Reese","Sage","Toby","Val","Wren","Zane","Ash","Bailey","Charlie","Devon","Emery","Frankie","Glen","Hayden","Jesse","Kit","Logan","Mika","Nico","Oakley","Pat","Robin","Skye","Tate","Uri"];
+var used={};S.names.forEach(function(x){var k=(x||"").trim().toLowerCase();if(k)used[k]=1});
+var free=shuffle(pool.filter(function(x){return!used[x.toLowerCase()]}));
+for(var i=0;i<S.n;i++){var cur=(S.names[i]||"").trim();if(cur)continue;var nm=free.pop();if(!nm){var c=i+1;while(used["player "+c])c++;nm="Player "+c}used[nm.toLowerCase()]=1;S.names[i]=nm}S.filled=true},
+clearNames:function(){S.names=[];syncNames();S.filled=false},
+toRoles:function(){if(total()!=S.n)S.pick=auto(S.n);S.step=2},
+loadGroup:function(){S.n=S.saved.length;S.names=S.saved.slice();S.step=1},
+fill:function(){S.pick=auto(S.n)},
+save:function(){try{localStorage.setItem("mafia_group",JSON.stringify(S.names));S.saved=S.names.slice()}catch(e){}},
+manOn:function(){S.manual=true},manOff:function(){S.manual=false},
+confirmMan:function(){S.codes=null;S.ri=0;S.shown=false;S.dead={};newGame();S.step=3},
+start:function(){if(S.on){dealOnline();return}S.codes=null;if(S.manual){S.assign=S.names.map(function(n){return{name:n.trim(),role:""}});S.step=16;return}S.seed=Math.floor(Math.random()*2147483647);S.assign=dealSeed(S.names.map(function(x){return x.trim()}),S.pick,S.seed);S.ri=0;S.shown=false;S.dead={};newGame();S.step=3},
+show:function(){S.shown=true},
+hide:function(){S.shown=false;S.ri++},
+restart:function(){unwatch();S.on=null;S.step=20;S.assign=[]},
+unpremium:function(){S.prem=false;savePrem(false);S.modal=false;S.pick=auto(S.n)},
+closeM:function(){S.modal=false;S.err=""},
+unlock:function(){var v=document.getElementById("code").value.trim();
+if(v===CODE){S.prem=true;S.modal=false;S.err="";savePrem(true);}else S.err="That code is not valid. Check it and try again."}
+};
+$.addEventListener("click",function(e){
+var b=e.target.closest("button");if(!b)return;var d=b.dataset;
+if(d.n){S.n=+d.n;S.pick={};S.seq=(S.seq||[]).concat(+d.n).slice(-6);if(S.seq.join(",")=="6,7,6,7,6,7"){S.custom=true;S.god=true;try{localStorage.setItem("mafia_god","1");navigator.vibrate&&navigator.vibrate(60)}catch(e){}}}
+else if(d.a&&act[d.a]){act[d.a]()}
+else if(d.r){var r=R[d.r];
+if(r.pre&&!S.prem){S.modal=true}
+else if(S.pick[r.id]){if(!r.req||mafCount()>S.pick.mafia)delete S.pick[r.id];else alert("You need at least one Mafia.")}
+else if(r.min&&S.n<r.min){alert("The "+r.n+" needs at least "+r.min+" players to be fair.")}
+else if(isMaf(r.id)&&mafCount()>=mafMax(S.n)){alert("With "+S.n+" players the Mafia team can have at most "+mafMax(S.n)+". Turn another Mafia role off first.")}
+else if(total()>=S.n){alert("All "+S.n+" roles are filled. Turn another role off first.")}
+else S.pick[r.id]=1}
+else if(d.m){var k=d.m,nv=S.pick[k]+ +d.d;if(nv<1)nv=1;if(nv>S.pick[k]){if(total()>=S.n)return;if(isMaf(k)&&mafCount()>=mafMax(S.n)){alert("With "+S.n+" players the Mafia team can have at most "+mafMax(S.n)+".");return}}S.pick[k]=nv}
+else if(d.np!==undefined){pickNp(d.np)}
+else if(d.sh!==undefined){shareRole(+d.sh);return}
+else if(d.x){S.dead[d.x]=!S.dead[d.x]}
+else if(d.t!==undefined){S.cur=+d.t;S.read=false}
+else if(d.p!==undefined){var pi=+d.p,st=G.order&&G.order[G.oi],need=(S.step==5&&st&&st.need)||1;
+if(pi<0)G.sel=[];else if(need==2){var q=G.sel.indexOf(pi);if(q>-1)G.sel.splice(q,1);else if(G.sel.length<2)G.sel.push(pi)}else G.sel=[pi]}
+render()});
+$.addEventListener("scroll",function(e){if(e.target&&e.target.id=="rolebox")checkRead()},true);
+$.addEventListener("change",function(e){if(e.target.dataset&&e.target.dataset.ai!==undefined){S.assign[+e.target.dataset.ai].role=e.target.value;render();return}if(e.target.id=="lang"){S.lang=e.target.value;saveSet();lastSp="";speak((TR[S.lang]||TR.en).day,"test"+S.lang+Date.now())}});
+$.addEventListener("input",function(e){if(e.target.id=="pcode"){e.target.value=e.target.value.replace(/\D/g,"");return}if(e.target.id=="rcode"){var v=e.target.value.replace(/\D/g,"");e.target.value=v;S.jcode=v;return}if(e.target.id=="hname"){S.hname=e.target.value;return}if(e.target.id=="myname"){S.myname=e.target.value;return}var i=e.target.dataset.i;if(i===undefined)return;S.names[+i]=e.target.value;render()});
+document.addEventListener("keydown",function(e){if(e.key==="Enter"&&S.modal)act.unlock(),render()});
+try{
+var man={name:"Mafia Game App",short_name:"Mafia Game",display:"standalone",start_url:".",background_color:"#0b1020",theme_color:"#0b1020",icons:[{src:"data:image/svg+xml,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='#0b1020'/><text x='50' y='68' font-size='60' text-anchor='middle'>🎭</text></svg>"),sizes:"512x512",type:"image/svg+xml"}]};
+var l=document.createElement("link");l.rel="manifest";l.href=URL.createObjectURL(new Blob([JSON.stringify(man)],{type:"application/manifest+json"}));document.head.appendChild(l)}catch(e){}
+syncNames();
+try{var hp=location.hash.match(/p=([0-9a-f]+)/);if(hp){var pp=dec(hp[1]).split('|');if(pp.length==2&&R[pp[1]]){S.on={code:'',host:false,role:pp[1],show:false,name:pp[0],key:hp[1].slice(2,12)+hp[1].length};var seen=false;try{seen=localStorage.getItem('mafia_seen_'+S.on.key)}catch(e){}S.step=seen?17:12}}}catch(e){}
+try{var hg=location.hash.match(/g=([^&]+)/);if(S.step==12||S.step==17)hg=null;if(hg){var gg=JSON.parse(decodeURIComponent(hg[1]));if(gg&&gg.n&&gg.p&&gg.s){S.game=gg;S.oerr='';S.step=15}}}catch(e){}
+render();
+</script>
+</body>
+</html>

@@ -72,6 +72,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--bl);outline-off
 </head>
 <body>
 <main id="app"></main>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script>
 var CODE="PrmaMrma";
 function ptok(){return"pm-"+CODE.split("").reverse().join("")}
@@ -136,7 +137,19 @@ G.votes={got:got,of:ids.length}}
 function dealOnline(){var o=S.on,list=[];for(var k in S.pick)for(var i=0;i<S.pick[k];i++)list.push(k);
 if(list.length!=o.players.length){alert("The player count changed. Go back to the lobby and choose roles again.");return}
 shuffle(list);var assign={};S.assign=o.players.map(function(q,i){assign[q.id]=list[i];return{id:q.id,name:q.name,role:list[i]}});S.dead={};o.round=(o.round||0)+1;o.state="playing";o.assignMap=assign;newGame();S.assign.forEach(function(q,i){G.rev[i]=true});o.lastPub=null;hostPub();S.step=3;S.cur=null;render();Promise.resolve().catch(function(){})}
-S.chk=window.claude&&claude.use?"wait":"nocl";if(true){claude.use("room").then(function(r){RM=r;S.chk=r?"ok":"null";if(S.step==10)render()}).catch(function(){S.chk="null";if(S.step==10)render()})}
+function mkRM(){return{join:function(name){return new Promise(function(res,rej){
+if(!window.mqtt){rej(new Error("mqtt"));return}
+var id=Math.random().toString(36).slice(2,14),base="zekomafia/"+name+"/",pe={},mine=null,subs=[],c,done=false;
+try{c=mqtt.connect("wss://broker.emqx.io:8084/mqtt",{clientId:"mf"+id,clean:true,reconnectPeriod:2000,will:{topic:base+id,payload:"",retain:true,qos:0}})}catch(e){rej(e);return}
+function fire(){subs.forEach(function(f){try{f()}catch(e){}})}
+var room={peers:function(){var a=Object.keys(pe).map(function(k){return{peer:k,isMe:false,sameTab:false,presence:pe[k]}});a.push({peer:id,isMe:true,sameTab:true,presence:mine||{}});return a},
+onPeers:function(f){subs.push(f);return function(){subs=subs.filter(function(x){return x!==f})}},
+presence:function(p){mine=p;try{c.publish(base+id,JSON.stringify(p),{retain:true})}catch(e){}fire();return Promise.resolve()},
+leave:function(){try{c.publish(base+id,"",{retain:true});c.end(true)}catch(e){}}};
+c.on("connect",function(){c.subscribe(base+"+",function(err){if(!done){done=true;if(err)rej(err);else res(room)}else if(mine)c.publish(base+id,JSON.stringify(mine),{retain:true})})});
+c.on("message",function(t,m){var pid=t.slice(base.length);if(pid===id)return;var v=m.toString();if(!v)delete pe[pid];else{try{pe[pid]=JSON.parse(v)}catch(e){return}}fire()});
+c.on("error",function(){if(!done){done=true;rej(new Error("conn"))}})})}}}
+if(window.claude&&claude.use){S.chk="wait";claude.use("room").then(function(r){RM=r;S.chk=r?"ok":"null";if(S.step==10)render()}).catch(function(){S.chk="null";if(S.step==10)render()})}else{RM=mkRM();S.chk="ok"}
 
 var S2={};try{S2=JSON.parse(localStorage.getItem("mafia_set")||"{}")}catch(e){}
 S.lang=S2.lang||"en";S.tts=S2.tts!==false;
@@ -296,6 +309,7 @@ h+='<div class="bar"><div><button class="btn alt" data-a="restart" style="flex:1
 var o=S.on,ps=o.players;
 h="<h1>Room "+o.code+"</h1><p>"+(o.host?"Share this 4-digit code. You moderate and do not get a role.":(o.lost?"The host left the room.":"Waiting for the host to deal roles."))+"</p><div class='pill'>"+ps.length+" joined</div>";
 ps.forEach(function(q,i){h+='<div class="pl"><span>'+(i+1)+". "+esc(q.name)+(q.id==o.me?" (you)":"")+"</span></div>"});
+if(o.host)h+='<label class="name"><span class="lb">Command</span><input id="cmd" placeholder="/god" maxlength="20" autocomplete="off" autocapitalize="off" value="'+esc(S.cmd||"")+'"></label><button class="btn alt" data-a="runCmd" style="width:100%;margin-bottom:6px">Run</button><p class="err">'+esc(S.cmdMsg||"")+"</p>";
 if(o.host&&S.god)h+=o.hostName?"<p>You are playing as <b>"+esc(o.hostName)+"</b> and can see everyone's role.</p>":'<label class="name"><span class="lb">Play too</span><input id="hname" placeholder="Your name" maxlength="20" autocomplete="off" value="'+esc(S.hname||"")+'"></label><button class="btn alt" data-a="hostPlay" style="width:100%;margin-bottom:8px">Join as a player</button>';
 if(o.host){h+=bar("leave","hostRoles","Choose roles",ps.length<1)+"<p>Needs at least 1 player.</p>"}
 else h+=bar(0,"leave","Leave room");
@@ -310,6 +324,7 @@ h+="<h2 style='margin:18px 0 6px'>Night order</h2>";
 order.forEach(function(x){h+='<label class="chk"><input type="checkbox">'+R[x].e+" "+R[x].n+" wakes"+(ids[x]?"":" (all out — call anyway)")+"</label>"});
 h+="<p style='margin-top:12px'>Day: discuss, then vote. Tap Out for the player voted off.</p>"+bar(0,"restart","New game");
 }
+if(S.assign.length&&!(S.on&&!S.on.host)&&(S.step==5||S.step==6||S.step==7)&&G.alive&&G.alive.some(function(a){return a===false})){h+='<div class="paper" style="margin-top:12px"><h2>Revive</h2>';S.assign.forEach(function(q,i){if(G.alive[i]===false)h+='<div class="pl"><span>'+esc(q.name)+'</span><button data-rv="'+i+'">Revive</button></div>'});h+='</div>'}
 if(S.god&&S.on&&S.on.host&&S.assign.length&&(S.step==3||S.step==5||S.step==6||S.step==7||S.step==8)){h+='<details class="paper" style="margin-top:12px"><summary><b>\ud83d\udc41 God view</b></summary>';S.assign.forEach(function(q,i){var al=G.alive&&G.alive[i]!==false;h+="<p"+(al?"":' style="opacity:.5;text-decoration:line-through"')+">"+R[q.role].e+" "+esc(q.name)+": "+R[q.role].n+(q.id&&S.on.me===q.id?" (you)":"")+"</p>"});var ac=[];Object.keys(G.act||{}).forEach(function(k){var v=G.act[k];if(v==null)return;var n=[].concat(v).map(function(i){return S.assign[i]?S.assign[i].name:"?"}).join(" + ");ac.push(R[k]?R[k].e+" "+R[k].n+" \u2192 "+esc(n):esc(k)+" \u2192 "+esc(n))});if(ac.length)h+="<p><b>Tonight</b></p><p>"+ac.join("</p><p>")+"</p>";h+="</details>"}
 if(S.modal)h+=S.prem?'<div class="modal"><div><h2>Premium is on</h2><p>Executioner, Mayor, Godfather, Framer, Detective and Tracker are unlocked.</p><div class="row"><button data-a="unpremium">Turn off premium</button><button data-a="closeM">Close</button></div></div></div>':'<div class="modal"><div><h2>Premium</h2><p>Enter your code to unlock Executioner, Mayor, Godfather, Framer, Detective and Tracker.</p><input id="code" placeholder="Premium code" autocomplete="off" autocapitalize="off"><p class="err">'+S.err+'</p><div class="row"><button data-a="closeM">Not now</button><button data-a="unlock" style="background:var(--ac);color:#fff;border:0">Redeem</button></div></div></div>';
 if(S.step==5){var T=TR[S.lang]||TR.en,sp="",cs=G.order[G.oi],pv=G.ph=="wake"?G.order[G.order.length-1]:G.order[G.oi-1];
@@ -366,6 +381,9 @@ S.myname=nm;S.jcode=code;S.oerr="Looking for the room…";
 Promise.resolve(RM.join("mafia"+code)).then(function(r){ROOM=r;ROOM.presence({pn:nm,code:code});setTimeout(function(){var h=hostPeer(code);
 if(!h||h.presence.state!=="lobby"){try{ROOM.leave()}catch(e){}ROOM=null;S.oerr="No open room with that code.";render();return}
 S.on={code:code,host:false,me:myPeer(),players:[],role:null,show:false};S.oerr="";S.step=11;watch();S.on.players=roster();render()},1800)}).catch(function(){ROOM=null;S.oerr="Could not join. Check the code and your connection.";render()})},
+runCmd:function(){var v=(S.cmd||"").trim().toLowerCase().replace(/^\//,"");S.cmd="";
+if(v=="god"||v=="god on"){S.god=true;S.cmdMsg="God mode on."}else if(v=="god off"){S.god=false;S.cmdMsg="God mode off."}else{S.cmdMsg="Unknown command.";return}
+try{localStorage.setItem("mafia_god",S.god?"1":"0")}catch(e){}},
 hostPlay:function(){var v=(S.hname||"").trim();if(!v||!S.on)return;S.on.hostName=v;S.on.lastPub=null;hostPub();setTimeout(function(){S.on.players=roster();render()},400)},
 hostRoles:function(){var o=S.on;S.n=o.players.length;S.names=o.players.map(function(q){return q.name});S.pick=auto(S.n);S.step=2},
 toLobby:function(){S.step=11},
@@ -409,6 +427,7 @@ else if(isMaf(r.id)&&mafCount()>=mafMax(S.n)){alert("With "+S.n+" players the Ma
 else if(total()>=S.n){alert("All "+S.n+" roles are filled. Turn another role off first.")}
 else S.pick[r.id]=1}
 else if(d.m){var k=d.m,nv=S.pick[k]+ +d.d;if(nv<1)nv=1;if(nv>S.pick[k]){if(total()>=S.n)return;if(isMaf(k)&&mafCount()>=mafMax(S.n)){alert("With "+S.n+" players the Mafia team can have at most "+mafMax(S.n)+".");return}}S.pick[k]=nv}
+else if(d.rv!==undefined){G.alive[+d.rv]=true}
 else if(d.np!==undefined){pickNp(d.np)}
 else if(d.sh!==undefined){shareRole(+d.sh);return}
 else if(d.x){S.dead[d.x]=!S.dead[d.x]}
@@ -418,8 +437,8 @@ if(pi<0)G.sel=[];else if(need==2){var q=G.sel.indexOf(pi);if(q>-1)G.sel.splice(q
 render()});
 $.addEventListener("scroll",function(e){if(e.target&&e.target.id=="rolebox")checkRead()},true);
 $.addEventListener("change",function(e){if(e.target.dataset&&e.target.dataset.ai!==undefined){S.assign[+e.target.dataset.ai].role=e.target.value;render();return}if(e.target.id=="lang"){S.lang=e.target.value;saveSet();lastSp="";speak((TR[S.lang]||TR.en).day,"test"+S.lang+Date.now())}});
-$.addEventListener("input",function(e){if(e.target.id=="pcode"){e.target.value=e.target.value.replace(/\D/g,"");return}if(e.target.id=="rcode"){var v=e.target.value.replace(/\D/g,"");e.target.value=v;S.jcode=v;return}if(e.target.id=="hname"){S.hname=e.target.value;return}if(e.target.id=="myname"){S.myname=e.target.value;return}var i=e.target.dataset.i;if(i===undefined)return;S.names[+i]=e.target.value;render()});
-document.addEventListener("keydown",function(e){if(e.key==="Enter"&&S.modal)act.unlock(),render()});
+$.addEventListener("input",function(e){if(e.target.id=="pcode"){e.target.value=e.target.value.replace(/\D/g,"");return}if(e.target.id=="rcode"){var v=e.target.value.replace(/\D/g,"");e.target.value=v;S.jcode=v;return}if(e.target.id=="cmd"){S.cmd=e.target.value;return}if(e.target.id=="hname"){S.hname=e.target.value;return}if(e.target.id=="myname"){S.myname=e.target.value;return}var i=e.target.dataset.i;if(i===undefined)return;S.names[+i]=e.target.value;render()});
+document.addEventListener("keydown",function(e){if(e.key==="Enter"&&S.modal)act.unlock(),render();else if(e.key==="Enter"&&e.target.id==="cmd"){act.runCmd();render()}});
 try{
 var man={name:"Mafia Game App",short_name:"Mafia Game",display:"standalone",start_url:".",background_color:"#0b1020",theme_color:"#0b1020",icons:[{src:"data:image/svg+xml,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='#0b1020'/><text x='50' y='68' font-size='60' text-anchor='middle'>🎭</text></svg>"),sizes:"512x512",type:"image/svg+xml"}]};
 var l=document.createElement("link");l.rel="manifest";l.href=URL.createObjectURL(new Blob([JSON.stringify(man)],{type:"application/manifest+json"}));document.head.appendChild(l)}catch(e){}

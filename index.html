@@ -107,10 +107,30 @@ var S={step:20,n:4,names:[],pick:{mafia:1},prem:false,assign:[],ri:0,shown:false
 S.prem=loadPrem();try{S.god=localStorage.getItem("mafia_god")==="1"}catch(e){}try{var g=JSON.parse(localStorage.getItem("mafia_group")||"null");if(g)S.saved=g}catch(e){}
 
 var RM=null,ROOM=null,unsubs=[];
+var ADMIN_PUB={"kty":"EC","crv":"P-256","x":"dEdIcxld6LKwl9KAAiAQEQZ4Za9t_H4CfkBOVq06tW4","y":"1GTkIH387_N-Xs2K5Me-HcfoPvLKzwene_U5V0iniV4"},ADM=null,BC=null,AROOM=null,PUBK=null,BANS={};
+var DEV=(function(){try{var d=localStorage.getItem("mafia_dev");if(!d){d=Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,10);localStorage.setItem("mafia_dev",d)}return d}catch(e){return"x"+Math.random().toString(36).slice(2,10)}})();
+try{BANS=JSON.parse(localStorage.getItem("mafia_bans")||"{}")}catch(e){}
+function b64(b){var a=new Uint8Array(b),s="";for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s)}
+function unb64(s){var b=atob(s),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a}
+function vfy(m,sig){try{PUBK=PUBK||crypto.subtle.importKey("jwk",ADMIN_PUB,{name:"ECDSA",namedCurve:"P-256"},false,["verify"]);return PUBK.then(function(k){return crypto.subtle.verify({name:"ECDSA",hash:"SHA-256"},k,unb64(sig),new TextEncoder().encode(m))}).catch(function(){return false})}catch(e){return Promise.resolve(false)}}
+function sign(m){return crypto.subtle.sign({name:"ECDSA",hash:"SHA-256"},ADM,new TextEncoder().encode(m)).then(b64)}
+function saveBans(){try{localStorage.setItem("mafia_bans",JSON.stringify(BANS))}catch(e){}}
+function gotBan(t){var m;try{m=JSON.parse(t)}catch(e){return}if(!m||!m.d||!m.s)return;
+vfy((m.u?"unban|":"ban|")+m.d,m.s).then(function(ok){if(!ok)return;if(m.u)delete BANS[m.d];else BANS[m.d]={n:String(m.n||"").slice(0,20),s:m.s,t:m.t||0};saveBans();
+if(!m.u&&m.d===DEV){unwatch();S.on=null;S.step=31}else if(S.on&&ROOM){try{S.on.players=roster()}catch(e){}}
+if(S.step==11||S.step==30||S.step==31)render()})}
+function reassert(){if(ADM&&BC&&BC.connected)Object.keys(BANS).forEach(function(d){var b=BANS[d];BC.publish("zekomafia/bans/"+d,JSON.stringify({d:d,n:b.n,s:b.s,t:b.t}),{retain:true})})}
+function startBans(){if(!window.mqtt||BC)return;try{BC=mqtt.connect("wss://broker.emqx.io:8084/mqtt",{clientId:"mb"+DEV+Math.random().toString(36).slice(2,6),reconnectPeriod:5000});BC.on("connect",function(){BC.subscribe("zekomafia/bans/+");reassert()});BC.on("message",function(t,m){gotBan(m.toString())})}catch(e){}}
+function pubBan(d,n,un){if(!ADM||!BC)return Promise.resolve();return sign((un?"unban|":"ban|")+d).then(function(s){var m={d:d,s:s,n:n||"",t:Date.now()};if(un)m.u=1;BC.publish("zekomafia/bans/"+d,JSON.stringify(m),{retain:true});gotBan(JSON.stringify(m))})}
+function adminUnlock(t){var j;try{j=JSON.parse(t)}catch(e){return Promise.resolve(false)}
+return crypto.subtle.importKey("jwk",j,{name:"ECDSA",namedCurve:"P-256"},false,["sign"]).then(function(k){ADM=k;return sign("test")}).then(function(s){return vfy("test",s)}).then(function(ok){if(ok){try{localStorage.setItem("mafia_adm",t)}catch(e){}}else ADM=null;return ok}).catch(function(){ADM=null;return false})}
+function wrapRoom(r){return{peers:function(){return r.peers()},onPeers:function(f){return r.onPeers(f)},leave:function(){return r.leave()},presence:function(p){p.dv=DEV;return r.presence(p)}}}
+function cmdBox(){return'<label class="name"><span class="lb">Command</span><input id="cmd" placeholder="/help" maxlength="40" autocomplete="off" autocapitalize="off" value="'+esc(S.cmd||"")+'"></label><button class="btn alt" data-a="runCmd" style="width:100%;margin-bottom:6px">Run</button><p class="err">'+esc(S.cmdMsg||"")+"</p>"}
+
 function unwatch(){unsubs.forEach(function(f){try{f()}catch(e){}});unsubs=[];try{ROOM&&ROOM.leave&&ROOM.leave()}catch(e){}ROOM=null}
 function myPeer(){var p=ROOM.peers().filter(function(x){return x.isMe&&x.sameTab})[0];return p?p.peer:null}
 function hostPeer(c){return ROOM.peers().filter(function(x){return x.presence&&x.presence.host===1&&x.presence.code===c})[0]}
-function roster(){var c=S.on.code;return ROOM.peers().filter(function(x){return x.presence&&x.presence.pn&&x.presence.code===c}).map(function(x){return{id:x.peer,name:String(x.presence.pn)}}).sort(function(a,b){return a.name.localeCompare(b.name)})}
+function roster(){var c=S.on.code,kk=S.on.host?(S.on.kicked||[]):((hostPeer(c)||{presence:{}}).presence.kk||[]);return ROOM.peers().filter(function(x){return x.presence&&x.presence.pn&&x.presence.code===c&&kk.indexOf(x.peer)<0&&!(x.presence.dv&&BANS[x.presence.dv])}).map(function(x){return{id:x.peer,name:String(x.presence.pn)}}).sort(function(a,b){return a.name.localeCompare(b.name)})}
 function npPanel(){var o=S.on,np=o.np;if(!np)return"";if(np.ph=="idle")return'<p style="text-align:center">Night actions will show here. Wait for the host.</p>';
 if(!np.to||np.to.indexOf(o.me)<0)return'<p style="text-align:center">Eyes closed. Not your turn.</p>';
 if(np.ph=="blocked")return'<div class="night reveal"><div class="big">\ud83d\udc83</div><h1>You were distracted</h1><p>Your power did not work tonight.</p></div>';
@@ -124,10 +144,10 @@ function pickNp(id){var o=S.on,np=o.np;if(!np||np.ph!="pick"||!ROOM)return;var c
 if(id=="none")cur=[];else if(np.need==2){var q=cur.indexOf(id);if(q>-1)cur.splice(q,1);else if(cur.length<2)cur.push(id)}else cur=[id];
 o.picked={r:o.round,n:np.n,k:np.k,t:cur};ROOM.presence({pn:S.myname,code:o.code,a:{r:o.round,n:np.n,k:np.k,t:cur.length?cur:["none"]}})}
 function watch(){var o=S.on;unsubs.push(ROOM.onPeers(function(){o.me=myPeer();o.players=roster();var chg=false;
-if(!o.host){var h=hostPeer(o.code);if(h){o.seen=true;o.lost=false;var p=h.presence;if(p.state==="playing"&&p.assign&&p.assign[o.me]&&p.round!==o.round){o.round=p.round;o.role=p.assign[o.me];o.show=false;S.read=false;S.step=12;chg=true}var ns=JSON.stringify([p.np,p.dead]);if(ns!==o.ns){o.ns=ns;o.np=p.np;o.dead=p.dead;if(S.step==12&&!o.show)chg=true}}else if(o.seen)o.lost=true}
+if(!o.host){var h=hostPeer(o.code);if(h){o.seen=true;o.lost=false;var p=h.presence;if((p.kk||[]).indexOf(o.me)>-1){setTimeout(function(){unwatch();S.on=null;S.step=20;alert("The host removed you from the room.");render()},0);return}if(p.state==="playing"&&p.assign&&p.assign[o.me]&&p.round!==o.round){o.round=p.round;o.role=p.assign[o.me];o.show=false;S.read=false;S.step=12;chg=true}var ns=JSON.stringify([p.np,p.dead]);if(ns!==o.ns){o.ns=ns;o.np=p.np;o.dead=p.dead;if(S.step==12&&!o.show)chg=true}}else if(o.seen)o.lost=true}
 if(o.host&&S.step==5&&G.ph=="pick"){var b=JSON.stringify(G.sel);collectVotes();if(b!==JSON.stringify(G.sel))chg=true}
 if(S.step==11||chg)render()}))}
-function hostPub(extra){var o=S.on;if(!o||!o.host||!ROOM)return;var p={host:1,code:o.code,pn:o.hostName||undefined,state:o.state||"lobby",round:o.round,assign:o.assignMap,dead:S.assign.map(function(q,i){return G.alive&&!G.alive[i]&&q.id?q.id:null}).filter(Boolean)};var st=S.step==5&&G.order&&G.order[G.oi];if(st&&(G.ph=="pick"||G.ph=="blocked"||G.ph=="res")){var to=holders(st.g).map(function(i){return S.assign[i].id}).filter(Boolean);p.np={n:G.night,k:st.k,t:st.t,need:st.need||0,x:st.k=="mafia"?S.assign.filter(function(q){return isMaf(q.role)&&q.id}).map(function(q){return q.id}):[],ph:G.ph,to:to,r:G.ph=="res"?resText(st.k):""}}else if(S.step==5||S.step==6||S.step==7)p.np={n:G.night,ph:"idle"};var j=JSON.stringify(p);if(j===o.lastPub)return;o.lastPub=j;try{ROOM.presence(p)}catch(e){}}
+function hostPub(extra){var o=S.on;if(!o||!o.host||!ROOM)return;var p={host:1,code:o.code,kk:o.kicked||[],pn:o.hostName||undefined,state:o.state||"lobby",round:o.round,assign:o.assignMap,dead:S.assign.map(function(q,i){return G.alive&&!G.alive[i]&&q.id?q.id:null}).filter(Boolean)};var st=S.step==5&&G.order&&G.order[G.oi];if(st&&(G.ph=="pick"||G.ph=="blocked"||G.ph=="res")){var to=holders(st.g).map(function(i){return S.assign[i].id}).filter(Boolean);p.np={n:G.night,k:st.k,t:st.t,need:st.need||0,x:st.k=="mafia"?S.assign.filter(function(q){return isMaf(q.role)&&q.id}).map(function(q){return q.id}):[],ph:G.ph,to:to,r:G.ph=="res"?resText(st.k):""}}else if(S.step==5||S.step==6||S.step==7)p.np={n:G.night,ph:"idle"};var j=JSON.stringify(p);if(j===o.lastPub)return;o.lastPub=j;try{ROOM.presence(p)}catch(e){}}
 function collectVotes(){var o=S.on;if(!o||!o.host||S.step!=5||G.ph!="pick")return;var st=G.order[G.oi];if(!st)return;var ids=holders(st.g).map(function(i){return S.assign[i].id}),tally={},got=0,cast=0;
 ROOM.peers().forEach(function(x){var a=x.presence&&x.presence.a;if(!a||a.r!==o.round||a.n!==G.night||a.k!==st.k||ids.indexOf(x.peer)<0)return;got++;(a.t||[]).forEach(function(t){tally[t]=(tally[t]||0)+1});cast++});
 if(!got)return;if(st.k=="mafia")Object.keys(tally).forEach(function(k){var j=S.assign.findIndex(function(q){return q.id===k});if(j>-1&&isMaf(S.assign[j].role))delete tally[k]});var idx=function(id){return S.assign.findIndex(function(q){return q.id===id})};
@@ -149,7 +169,7 @@ leave:function(){try{c.publish(base+id,"",{retain:true});c.end(true)}catch(e){}}
 c.on("connect",function(){c.subscribe(base+"+",function(err){if(!done){done=true;if(err)rej(err);else res(room)}else if(mine)c.publish(base+id,JSON.stringify(mine),{retain:true})})});
 c.on("message",function(t,m){var pid=t.slice(base.length);if(pid===id)return;var v=m.toString();if(!v)delete pe[pid];else{try{pe[pid]=JSON.parse(v)}catch(e){return}}fire()});
 c.on("error",function(){if(!done){done=true;rej(new Error("conn"))}})})}}}
-if(window.claude&&claude.use){S.chk="wait";claude.use("room").then(function(r){RM=r;S.chk=r?"ok":"null";if(S.step==10)render()}).catch(function(){S.chk="null";if(S.step==10)render()})}else{RM=mkRM();S.chk="ok"}
+if(window.claude&&claude.use){S.chk="wait";claude.use("room").then(function(r){RM=r;S.chk=r?"ok":"null";if(S.step==10)render()}).catch(function(){S.chk="null";if(S.step==10)render()})}else{RM=mkRM();S.chk="ok";startBans();try{var at=localStorage.getItem("mafia_adm");if(at)adminUnlock(at).then(function(ok){if(ok){reassert();render()}})}catch(e){}}
 
 var S2={};try{S2=JSON.parse(localStorage.getItem("mafia_set")||"{}")}catch(e){}
 S.lang=S2.lang||"en";S.tts=S2.tts!==false;
@@ -202,7 +222,7 @@ function render(){
 var h="";
 if(S.step==0){
 h=steps()+"<h1>How many players?</h1><p>Select the number of people joining the game.</p><div class='grid'>";
-for(var i=1;i<=12;i++)h+='<button class="num'+(S.n==i?" sel":"")+'" data-n="'+i+'">'+i+"</button>";
+for(var i=4;i<=12;i++)h+='<button class="num'+(S.n==i?" sel":"")+'" data-n="'+i+'">'+i+"</button>";
 h+="</div><p style='margin-top:18px'>More players (13–50):</p><div class='grid small'>";
 for(i=13;i<=50;i++)h+='<button class="num'+(S.n==i?" sel":"")+'" data-n="'+i+'">'+i+"</button>";
 h+="</div>";
@@ -231,8 +251,8 @@ h+='<p style="text-align:center"><button class="btn alt" data-a="fill">Auto bala
 h+=bar(S.on?"toLobby":"toNames","start",S.on?"Deal roles":(S.manual?"Choose who is who":"Start game"),t!=S.n||mafCount()<1||mafCount()>mafMax(S.n));
 }else if(S.step==20){
 h='<div class="top"><div class="set"><select id="lang" aria-label="Voice language">'+Object.keys(LN).map(function(c){return'<option value="'+c+'"'+(S.lang==c?" selected":"")+">"+LN[c]+"</option>"}).join("")+'</select><button class="btn alt tiny" data-a="tts" aria-label="Toggle voice">'+(S.tts?"🔊 On":"🔇 Off")+'</button></div><button class="btn alt tiny" data-a="premium">'+(S.prem?"⭐ On":"⭐ Premium")+'</button></div>';
-h+='<div class="reveal" style="padding:36px 0 20px"><div class="big" style="font-size:64px">🎭</div><h1>Mafia Game App</h1><p>The classic party game. One phone runs the night.</p></div>';
-h+='<button class="btn" data-a="localPass" style="width:100%;margin-bottom:8px">🏠 Local game</button>';h+='<button class="btn" data-a="onlineHome" style="width:100%;margin-bottom:8px">🌐 Online game</button>';h+='<div style="height:8px"></div><button class="btn alt" data-a="onlineHome" style="width:100%;margin-bottom:4px">🔑 Join a room</button>';
+h+='<div class="reveal" style="padding:36px 0 20px"><button data-a="tapAdm" class="big" style="font-size:64px;background:none;border:0;padding:0">🎭</button><h1>Mafia Game App</h1><p>The classic party game. One phone runs the night.</p></div>';
+h+='<button class="btn" data-a="localPass" style="width:100%;margin-bottom:8px">🏠 Local game</button>';h+='<button class="btn" data-a="onlineHome" style="width:100%;margin-bottom:8px">🌐 Online game</button>';h+='<div style="height:8px"></div><button class="btn alt" data-a="onlineHome" style="width:100%;margin-bottom:4px">🔑 Join a room</button>';if(ADM)h+='<button class="btn alt" data-a="admin" style="width:100%;margin-top:8px">🛡 Admin</button>';
 }else if(S.step==3){
 if(S.cur==null){
 var nr=Object.keys(G.rev).length,all=nr==S.assign.length;
@@ -308,11 +328,17 @@ h+='<div class="bar"><div><button class="btn alt" data-a="restart" style="flex:1
 }else if(S.step==11){
 var o=S.on,ps=o.players;
 h="<h1>Room "+o.code+"</h1><p>"+(o.host?"Share this 4-digit code. You moderate and do not get a role.":(o.lost?"The host left the room.":"Waiting for the host to deal roles."))+"</p><div class='pill'>"+ps.length+" joined</div>";
-ps.forEach(function(q,i){h+='<div class="pl"><span>'+(i+1)+". "+esc(q.name)+(q.id==o.me?" (you)":"")+"</span></div>"});
+ps.forEach(function(q,i){h+='<div class="pl"><span>'+(i+1)+". "+esc(q.name)+(q.id==o.me?" (you)":"")+"</span>"+(o.host&&q.id!=o.me?'<button data-kick="'+esc(q.id)+'">Kick</button>':"")+"</div>"});
 if(o.host)h+='<label class="name"><span class="lb">Command</span><input id="cmd" placeholder="/god" maxlength="20" autocomplete="off" autocapitalize="off" value="'+esc(S.cmd||"")+'"></label><button class="btn alt" data-a="runCmd" style="width:100%;margin-bottom:6px">Run</button><p class="err">'+esc(S.cmdMsg||"")+"</p>";
 if(o.host&&S.god)h+=o.hostName?"<p>You are playing as <b>"+esc(o.hostName)+"</b> and can see everyone's role.</p>":'<label class="name"><span class="lb">Play too</span><input id="hname" placeholder="Your name" maxlength="20" autocomplete="off" value="'+esc(S.hname||"")+'"></label><button class="btn alt" data-a="hostPlay" style="width:100%;margin-bottom:8px">Join as a player</button>';
-if(o.host){h+=bar("leave","hostRoles","Choose roles",ps.length<1)+"<p>Needs at least 1 player.</p>"}
+if(o.host){h+=bar("leave","hostRoles","Choose roles",ps.length<(S.god?1:4))+"<p>Needs at least "+(S.god?1:4)+" players.</p>"}
 else h+=bar(0,"leave","Leave room");
+}else if(S.step==30){
+h="<h1>\ud83d\udee1 Admin</h1><p>Watch any room by code. Ban removes a device from every room.</p><label class='name'><span class='lb'>Room</span><input id='acode' placeholder='4-digit code' inputmode='numeric' maxlength='4' value='"+esc(S.acode||"")+"'></label><button class='btn alt' data-a='admWatch' style='width:100%;margin-bottom:8px'>Watch room</button><p class='err'>"+esc(S.aerr||"")+"</p>";
+if(AROOM){var hpx=AROOM.peers().filter(function(x){return x.presence&&x.presence.host===1})[0],asg=hpx&&hpx.presence.assign||{};AROOM.peers().forEach(function(x){var p=x.presence;if(!p||x.isMe||p.adm)return;var rl=asg[x.peer]&&R[asg[x.peer]]?R[asg[x.peer]].e+" ":"";h+='<div class="pl"><span>'+(p.host?"\ud83d\udc51 Host":rl+esc(p.pn||"?"))+"</span>"+(p.dv&&p.dv!==DEV&&!BANS[p.dv]?'<button data-bn="'+esc(p.dv)+'" data-nm="'+esc(p.pn||"Host")+'">Ban</button>':(BANS[p.dv]?"<b>banned</b>":""))+"</div>"})}
+h+="<h2 style='margin:14px 0 6px'>Banned ("+Object.keys(BANS).length+")</h2>";Object.keys(BANS).forEach(function(d){h+='<div class="pl"><span>'+esc(BANS[d].n||"?")+" \u00b7 "+esc(d.slice(0,6))+'</span><button data-ub="'+esc(d)+'">Unban</button></div>'});
+h+=bar(0,"admBack","Back");
+}else if(S.step==31){h="<div class='reveal'><div class='big'>\ud83d\udeab</div><h1>You are banned</h1><p>The admin removed this device from online games.</p><button class='btn' data-a='restart' style='width:100%'>Back</button></div>"
 }else if(S.step==12){
 var o2=S.on;if(!o2.show)h='<div class="reveal"><p>'+(o2.code?'Room '+o2.code:(o2.name?'Hi '+esc(o2.name)+'. Tap only if you are '+esc(o2.name):'Your secret role'))+'</p><h1>Your role is ready</h1><div class="rc"><div class="big">🤫</div></div><button class="btn" data-a="showMine" style="width:100%">Show my role</button></div>'+(o2.code?npPanel():"");else h=roleCard(o2.role,o2.code?"Room "+o2.code:(o2.name?"Only "+esc(o2.name)+" should look":"Only you should look"),"hideMine");
 }else{
@@ -325,7 +351,7 @@ order.forEach(function(x){h+='<label class="chk"><input type="checkbox">'+R[x].e
 h+="<p style='margin-top:12px'>Day: discuss, then vote. Tap Out for the player voted off.</p>"+bar(0,"restart","New game");
 }
 if(S.assign.length&&!(S.on&&!S.on.host)&&(S.step==5||S.step==6||S.step==7)&&G.alive&&G.alive.some(function(a){return a===false})){h+='<div class="paper" style="margin-top:12px"><h2>Revive</h2>';S.assign.forEach(function(q,i){if(G.alive[i]===false)h+='<div class="pl"><span>'+esc(q.name)+'</span><button data-rv="'+i+'">Revive</button></div>'});h+='</div>'}
-if(S.god&&S.on&&S.on.host&&S.assign.length&&(S.step==3||S.step==5||S.step==6||S.step==7||S.step==8)){h+='<details class="paper" style="margin-top:12px"><summary><b>\ud83d\udc41 God view</b></summary>';S.assign.forEach(function(q,i){var al=G.alive&&G.alive[i]!==false;h+="<p"+(al?"":' style="opacity:.5;text-decoration:line-through"')+">"+R[q.role].e+" "+esc(q.name)+": "+R[q.role].n+(q.id&&S.on.me===q.id?" (you)":"")+"</p>"});var ac=[];Object.keys(G.act||{}).forEach(function(k){var v=G.act[k];if(v==null)return;var n=[].concat(v).map(function(i){return S.assign[i]?S.assign[i].name:"?"}).join(" + ");ac.push(R[k]?R[k].e+" "+R[k].n+" \u2192 "+esc(n):esc(k)+" \u2192 "+esc(n))});if(ac.length)h+="<p><b>Tonight</b></p><p>"+ac.join("</p><p>")+"</p>";h+="</details>"}
+if(S.god&&S.on&&S.on.host&&S.assign.length&&(S.step==3||S.step==5||S.step==6||S.step==7||S.step==8)){h+='<details class="paper" style="margin-top:12px"><summary><b>\ud83d\udc41 God view</b></summary>';S.assign.forEach(function(q,i){var al=G.alive&&G.alive[i]!==false;h+="<p"+(al?"":' style="opacity:.5;text-decoration:line-through"')+">"+R[q.role].e+" "+esc(q.name)+": "+R[q.role].n+(q.id&&S.on.me===q.id?" (you)":"")+"</p>"});var ac=[];Object.keys(G.act||{}).forEach(function(k){var v=G.act[k];if(v==null)return;var n=[].concat(v).map(function(i){return S.assign[i]?S.assign[i].name:"?"}).join(" + ");ac.push(R[k]?R[k].e+" "+R[k].n+" \u2192 "+esc(n):esc(k)+" \u2192 "+esc(n))});if(ac.length)h+="<p><b>Tonight</b></p><p>"+ac.join("</p><p>")+"</p>";h+=cmdBox()+"</details>"}
 if(S.modal)h+=S.prem?'<div class="modal"><div><h2>Premium is on</h2><p>Executioner, Mayor, Godfather, Framer, Detective and Tracker are unlocked.</p><div class="row"><button data-a="unpremium">Turn off premium</button><button data-a="closeM">Close</button></div></div></div>':'<div class="modal"><div><h2>Premium</h2><p>Enter your code to unlock Executioner, Mayor, Godfather, Framer, Detective and Tracker.</p><input id="code" placeholder="Premium code" autocomplete="off" autocapitalize="off"><p class="err">'+S.err+'</p><div class="row"><button data-a="closeM">Not now</button><button data-a="unlock" style="background:var(--ac);color:#fff;border:0">Redeem</button></div></div></div>';
 if(S.step==5){var T=TR[S.lang]||TR.en,sp="",cs=G.order[G.oi],pv=G.ph=="wake"?G.order[G.order.length-1]:G.order[G.oi-1];
 var slp=(pv&&(G.oi>0||G.ph=="wake")&&T.s[pv.k])?T.sleep.replace("{r}",T.s[pv.k][0])+" ":"";
@@ -368,22 +394,36 @@ voteOut:function(){G.vres=G.sel.length?die(G.sel[0]):[];G.vph="res"},
 afterVote:function(){if(G.vres.length&&S.assign[G.vres[0]].role=="jester"){G.win="jester";S.step=8;return}var w=checkWin();if(w){G.win=w;S.step=8}else act.startNight()},
 again:function(){if(S.on){dealOnline();return}act.reshuffle();S.step=3},
 
-onlineHome:function(){S.step=10;S.oerr=""},
-createRoom:function(){if(!RM)return;S.oerr="Creating room…";var tries=0;
+onlineHome:function(){if(BANS[DEV]){S.step=31;return}S.step=10;S.oerr=""},
+createRoom:function(){if(BANS[DEV]){S.step=31;return}if(!RM)return;S.oerr="Creating room…";var tries=0;
 function attempt(){var code=String(Math.floor(1000+Math.random()*9000));
-Promise.resolve(RM.join("mafia"+code)).then(function(r){ROOM=r;setTimeout(function(){
+Promise.resolve(RM.join("mafia"+code)).then(function(r){ROOM=wrapRoom(r);setTimeout(function(){
 if(ROOM.peers().some(function(x){return x.presence&&x.presence.host===1&&!x.isMe})&&tries++<5){try{ROOM.leave()}catch(e){}ROOM=null;attempt();return}
 S.on={code:code,host:true,me:myPeer(),players:[],role:null,show:false};ROOM.presence({host:1,code:code,state:"lobby"});S.oerr="";S.step=11;watch();S.on.players=roster();render()},1500)}).catch(function(){ROOM=null;S.oerr="Could not create the room. Open the app from its published link.";render()})}
 attempt()},
-joinRoom:function(){if(!RM)return;var nm=(document.getElementById("myname").value||"").trim(),code=(document.getElementById("rcode").value||"").replace(/\D/g,"");
+joinRoom:function(){if(BANS[DEV]){S.step=31;return}if(!RM)return;var nm=(document.getElementById("myname").value||"").trim(),code=(document.getElementById("rcode").value||"").replace(/\D/g,"");
 if(!nm||code.length!=4){S.oerr="Enter your name and the 4-digit code.";return}
 S.myname=nm;S.jcode=code;S.oerr="Looking for the room…";
-Promise.resolve(RM.join("mafia"+code)).then(function(r){ROOM=r;ROOM.presence({pn:nm,code:code});setTimeout(function(){var h=hostPeer(code);
+Promise.resolve(RM.join("mafia"+code)).then(function(r){ROOM=wrapRoom(r);ROOM.presence({pn:nm,code:code});setTimeout(function(){var h=hostPeer(code);
 if(!h||h.presence.state!=="lobby"){try{ROOM.leave()}catch(e){}ROOM=null;S.oerr="No open room with that code.";render();return}
 S.on={code:code,host:false,me:myPeer(),players:[],role:null,show:false};S.oerr="";S.step=11;watch();S.on.players=roster();render()},1800)}).catch(function(){ROOM=null;S.oerr="Could not join. Check the code and your connection.";render()})},
-runCmd:function(){var v=(S.cmd||"").trim().toLowerCase().replace(/^\//,"");S.cmd="";
-if(v=="god"||v=="god on"){S.god=true;S.cmdMsg="God mode on."}else if(v=="god off"){S.god=false;S.cmdMsg="God mode off."}else{S.cmdMsg="Unknown command.";return}
-try{localStorage.setItem("mafia_god",S.god?"1":"0")}catch(e){}},
+runCmd:function(){var raw=(S.cmd||"").trim();S.cmd="";var m=raw.replace(/^\//,"").split(/\s+/),c=(m.shift()||"").toLowerCase(),arg=m.join(" ").trim().toLowerCase(),o=S.on;
+function pl(){return((o&&o.players)||[]).filter(function(q){return q.name.toLowerCase()==arg})[0]}
+if(c=="god"){S.god=arg!="off";S.cmdMsg="God mode "+(S.god?"on.":"off.");try{localStorage.setItem("mafia_god",S.god?"1":"0")}catch(e){}}
+else if(c=="kick"){var p=pl();if(p&&p.id!=o.me){act.kick(p.id);S.cmdMsg="Kicked "+p.name+"."}else S.cmdMsg="No player named that."}
+else if(c=="kickall"){(o.players||[]).forEach(function(q){if(q.id!=o.me)act.kick(q.id)});S.cmdMsg="Everyone kicked."}
+else if(c=="kill"||c=="revive"){var i=S.assign.findIndex(function(q){return q.name.toLowerCase()==arg});if(i<0||!G.alive)S.cmdMsg="No player named that (use during a game).";else{G.alive[i]=c=="revive";S.cmdMsg=(c=="revive"?"Revived ":"Killed ")+S.assign[i].name+"."}}
+else if(c=="ban"&&ADM){var p2=pl(),x=p2&&ROOM.peers().filter(function(z){return z.peer==p2.id})[0];if(x&&x.presence&&x.presence.dv){pubBan(x.presence.dv,p2.name);act.kick(p2.id);S.cmdMsg="Banned "+p2.name+" everywhere."}else S.cmdMsg="No player named that."}
+else if(c=="unban"&&ADM){var d2=Object.keys(BANS).filter(function(d){return(BANS[d].n||"").toLowerCase()==arg||d.indexOf(arg)==0})[0];if(d2){pubBan(d2,"",true);S.cmdMsg="Unbanned."}else S.cmdMsg="Not found."}
+else if(c=="bans"&&ADM){S.cmdMsg=Object.keys(BANS).length+" banned: "+Object.keys(BANS).map(function(d){return BANS[d].n||d.slice(0,6)}).join(", ")}
+else if(c=="help")S.cmdMsg="/god, /god off, /kick name, /kickall, /kill name, /revive name"+(ADM?", /ban name, /unban name, /bans":"");
+else S.cmdMsg="Unknown command. Try /help"},
+kick:function(id){var o=S.on;if(!o||!o.host)return;o.kicked=o.kicked||[];if(o.kicked.indexOf(id)<0)o.kicked.push(id);o.players=roster();if(S.assign.length&&G.alive){var i=S.assign.findIndex(function(q){return q.id===id});if(i>-1)G.alive[i]=false}o.lastPub=null},
+tapAdm:function(){S.taps=(S.taps||0)+1;clearTimeout(S.tt);S.tt=setTimeout(function(){S.taps=0},3000);if(S.taps>=7){S.taps=0;if(ADM){S.step=30;return}var t=prompt("Admin key");if(t)adminUnlock(t).then(function(ok){if(ok){startBans();reassert();S.step=30}else alert("Invalid key");render()})}},
+admin:function(){S.step=30},
+admBack:function(){if(AROOM){try{AROOM.leave()}catch(e){}AROOM=null}S.step=20},
+admWatch:function(){var c=(document.getElementById("acode").value||"").replace(/\D/g,"");S.acode=c;if(c.length!=4||!RM){S.aerr="Enter a 4-digit code.";return}S.aerr="Joining...";if(AROOM){try{AROOM.leave()}catch(e){}AROOM=null}
+Promise.resolve(RM.join("mafia"+c)).then(function(r){AROOM=r;r.presence({adm:1,dv:DEV});r.onPeers(function(){if(S.step==30)render()});S.aerr="";render()}).catch(function(){S.aerr="Could not join.";render()})},
 hostPlay:function(){var v=(S.hname||"").trim();if(!v||!S.on)return;S.on.hostName=v;S.on.lastPub=null;hostPub();setTimeout(function(){S.on.players=roster();render()},400)},
 hostRoles:function(){var o=S.on;S.n=o.players.length;S.names=o.players.map(function(q){return q.name});S.pick=auto(S.n);S.step=2},
 toLobby:function(){S.step=11},
@@ -428,6 +468,9 @@ else if(total()>=S.n){alert("All "+S.n+" roles are filled. Turn another role off
 else S.pick[r.id]=1}
 else if(d.m){var k=d.m,nv=S.pick[k]+ +d.d;if(nv<1)nv=1;if(nv>S.pick[k]){if(total()>=S.n)return;if(isMaf(k)&&mafCount()>=mafMax(S.n)){alert("With "+S.n+" players the Mafia team can have at most "+mafMax(S.n)+".");return}}S.pick[k]=nv}
 else if(d.rv!==undefined){G.alive[+d.rv]=true}
+else if(d.kick!==undefined){act.kick(d.kick)}
+else if(d.bn!==undefined){pubBan(d.bn,d.nm,false)}
+else if(d.ub!==undefined){pubBan(d.ub,"",true)}
 else if(d.np!==undefined){pickNp(d.np)}
 else if(d.sh!==undefined){shareRole(+d.sh);return}
 else if(d.x){S.dead[d.x]=!S.dead[d.x]}

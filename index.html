@@ -111,13 +111,13 @@ function myPeer(){var p=ROOM.peers().filter(function(x){return x.isMe&&x.sameTab
 function hostPeer(c){return ROOM.peers().filter(function(x){return x.presence&&x.presence.host===1&&x.presence.code===c})[0]}
 function roster(){var c=S.on.code;return ROOM.peers().filter(function(x){return x.presence&&x.presence.pn&&x.presence.code===c}).map(function(x){return{id:x.peer,name:String(x.presence.pn)}}).sort(function(a,b){return a.name.localeCompare(b.name)})}
 function watch(){var o=S.on;unsubs.push(ROOM.onPeers(function(){o.me=myPeer();o.players=roster();var chg=false;
-if(!o.host){var h=hostPeer(o.code);if(h){o.seen=true;o.lost=false;var p=h.presence;if(p.state==="playing"&&p.assign&&p.assign[o.me]&&p.round!==o.round){o.round=p.round;o.role=p.assign[o.me];o.show=false;S.read=false;S.step=12;chg=true}}else if(o.seen)o.lost=true}
+if(!o.host){var h=hostPeer(o.code);if(h){o.seen=true;o.lost=false;var p=h.presence;o.cd=p.state==="countdown"?p.cd:null;if(p.state==="playing"&&p.assign&&p.assign[o.me]&&p.round!==o.round){o.round=p.round;o.role=p.assign[o.me];o.show=false;S.read=false;S.step=12;chg=true}}else if(o.seen)o.lost=true}
 if(S.step==11||chg)render()}))}
 function dealOnline(){var o=S.on,list=[];for(var k in S.pick)for(var i=0;i<S.pick[k];i++)list.push(k);
-if(list.length!=o.players.length){alert("The player count changed. Go back to the lobby and choose roles again.");return}
+if(list.length!=o.players.length){ROOM.presence({host:1,code:o.code,state:"lobby"});S.step=11;render();alert("The player count changed. Go back to the lobby and choose roles again.");return}
 shuffle(list);var assign={};S.assign=o.players.map(function(q,i){assign[q.id]=list[i];return{name:q.name,role:list[i]}});S.dead={};o.round=(o.round||0)+1;
 ROOM.presence({host:1,code:o.code,state:"playing",round:o.round,assign:assign}).then(function(){newGame();S.step=4;render()}).catch(function(){alert("Could not deal roles. Check your connection and try again.")})}
-S.chk=window.claude&&claude.use?"wait":"nocl";if(false){claude.use("room").then(function(r){RM=r;S.chk=r?"ok":"null";if(S.step==10)render()}).catch(function(){S.chk="null";if(S.step==10)render()})}
+S.chk=window.claude&&claude.use?"wait":"nocl";if(window.claude&&claude.use){claude.use("room").then(function(r){RM=r;S.chk=r?"ok":"null";if(S.step==10)render()}).catch(function(){S.chk="null";if(S.step==10)render()})}
 
 var S2={};try{S2=JSON.parse(localStorage.getItem("mafia_set")||"{}")}catch(e){}
 S.lang=S2.lang||"en";S.tts=S2.tts!==false;
@@ -196,11 +196,11 @@ if(on&&r.multi&&!r.req||on&&r.multi)h+='<div class="step"><button data-m="'+r.id
 h+="</div>"});
 if(S.mode!="pass")h+='<h2 style="margin:6px 0 6px">Who gets which role?</h2><div style="display:flex;gap:8px;margin-bottom:12px"><button class="opt'+(S.manual?"":" sel")+'" data-a="manOff" style="margin:0;text-align:center">🎲 Random</button><button class="opt'+(S.manual?" sel":"")+'" data-a="manOn" style="margin:0;text-align:center">✋ I choose</button></div>';
 h+='<p style="text-align:center"><button class="btn alt" data-a="fill">Auto balance</button> <button class="btn alt" data-a="save">Save this group</button></p>';
-h+=bar(S.on?"toLobby":"toNames","start",S.on?"Deal roles":(S.manual?"Choose who is who":"Start game"),t!=S.n||mafCount()<1||mafCount()>mafMax(S.n));
+h+=bar(S.on?"toLobby":"toNames","start",S.on?"Start":(S.manual?"Choose who is who":"Start game"),t!=S.n||mafCount()<1||mafCount()>mafMax(S.n));
 }else if(S.step==20){
 h='<div class="top"><div class="set"><select id="lang" aria-label="Voice language">'+Object.keys(LN).map(function(c){return'<option value="'+c+'"'+(S.lang==c?" selected":"")+">"+LN[c]+"</option>"}).join("")+'</select><button class="btn alt tiny" data-a="tts" aria-label="Toggle voice">'+(S.tts?"🔊 On":"🔇 Off")+'</button></div><button class="btn alt tiny" data-a="premium">'+(S.prem?"⭐ On":"⭐ Premium")+'</button></div>';
 h+='<div class="reveal" style="padding:36px 0 20px"><div class="big" style="font-size:64px">🎭</div><h1>Mafia Game App</h1><p>The classic party game. One phone runs the night.</p></div>';
-h+='<button class="btn" data-a="localPass" style="width:100%;margin-bottom:4px">🏠 Local game</button><p style="margin:0 0 18px">Everyone plays on this one phone. Enter the names, pick the roles, and they are dealt randomly. Pass the phone around.</p>';h+='<button class="btn" data-a="local" style="width:100%;margin-bottom:4px">🌐 Online game (host)</button><p style="margin:0 0 18px">Friends use their own phones. You enter the names and pick each person\'s role. Each friend gets a 4-digit code.</p>';h+='<div style="height:8px"></div><button class="btn alt" data-a="enterCode" style="width:100%;margin-bottom:4px">🔑 Join a room</button><p style="margin:0">Friend? Type the 4-digit code the host sent you.</p>';
+h+='<button class="btn" data-a="localPass" style="width:100%;margin-bottom:4px">🏠 Local game</button><p style="margin:0 0 18px">Everyone plays on this one phone. Enter the names, pick the roles, and they are dealt randomly. Pass the phone around.</p>';h+='<button class="btn" data-a="local" style="width:100%;margin-bottom:4px">🌐 Online game (host)</button><p style="margin:0 0 18px">Friends use their own phones. You enter the names and pick each person\'s role. Each friend gets a 4-digit code.</p>';h+='<button class="btn" data-a="onlineHome" style="width:100%;margin-bottom:4px">🛋️ Lobby (wait for friends)</button><p style="margin:0 0 18px">Open a room and wait while friends join from their own phones with a 4-digit code. Then deal the roles when everyone is in.</p>';h+='<div style="height:8px"></div><button class="btn alt" data-a="enterCode" style="width:100%;margin-bottom:4px">🔑 Join a room</button><p style="margin:0">Friend? Type the 4-digit code the host sent you.</p>';
 }else if(S.step==3){
 if(S.cur==null){
 var nr=Object.keys(G.rev).length,all=nr==S.assign.length;
@@ -275,9 +275,9 @@ h+='<button class="btn alt" data-a="joinRoom" style="width:100%">Join room</butt
 h+='<div class="bar"><div><button class="btn alt" data-a="restart" style="flex:1">Back</button></div></div>';
 }else if(S.step==11){
 var o=S.on,ps=o.players;
-h="<h1>Room "+o.code+"</h1><p>"+(o.host?"Share this 4-digit code. You moderate and do not get a role.":(o.lost?"The host left the room.":"Waiting for the host to deal roles."))+"</p><div class='pill'>"+ps.length+" joined</div>";
+h="<h1>Room "+o.code+"</h1><p>"+(o.host?"Share this 4-digit code. You moderate and do not get a role.":(o.lost?"The host left the room.":"Waiting for the host to deal roles."))+"</p><div class='pill'>"+ps.length+" joined</div>"+(o.host&&ps.length<1?"<p>Waiting for players to join…</p>":"")+(o.cd?"<div class='rc'><div class='big'>"+o.cd+"</div><p>Starting…</p></div>":"");
 ps.forEach(function(q,i){h+='<div class="pl"><span>'+(i+1)+". "+esc(q.name)+(q.id==o.me?" (you)":"")+"</span></div>"});
-if(o.host){h+=bar("leave","hostRoles","Choose roles",ps.length<4)+"<p>Needs at least 4 players.</p>"}
+if(o.cd){}else if(o.host){h+=bar("leave","hostRoles","Choose roles",ps.length<1)+"<p>Needs at least 1 player.</p>"}
 else h+=bar(0,"leave","Leave room");
 }else if(S.step==12){
 var o2=S.on;if(!o2.show)h='<div class="reveal"><p>'+(o2.code?'Room '+o2.code:(o2.name?'Hi '+esc(o2.name)+'. Tap only if you are '+esc(o2.name):'Your secret role'))+'</p><h1>Your role is ready</h1><div class="rc"><div class="big">🤫</div></div><button class="btn" data-a="showMine" style="width:100%">Show my role</button></div>';else h=roleCard(o2.role,o2.code?"Room "+o2.code:(o2.name?"Only "+esc(o2.name)+" should look":"Only you should look"),"hideMine");
@@ -366,7 +366,13 @@ fill:function(){S.pick=auto(S.n)},
 save:function(){try{localStorage.setItem("mafia_group",JSON.stringify(S.names));S.saved=S.names.slice()}catch(e){}},
 manOn:function(){S.manual=true},manOff:function(){S.manual=false},
 confirmMan:function(){S.codes=null;S.ri=0;S.shown=false;S.dead={};newGame();S.step=3},
-start:function(){S.codes=null;if(S.manual){S.assign=S.names.map(function(n){return{name:n.trim(),role:""}});S.step=16;return}S.seed=Math.floor(Math.random()*2147483647);S.assign=dealSeed(S.names.map(function(x){return x.trim()}),S.pick,S.seed);S.ri=0;S.shown=false;S.dead={};newGame();S.step=3},
+countdown:function(){var o=S.on;o.cd=3;S.step=11;
+function tick(){if(S.on!==o||o.cd==null)return;
+if(o.cd<1){o.cd=null;dealOnline();return}
+ROOM.presence({host:1,code:o.code,state:"countdown",cd:o.cd});render();
+setTimeout(function(){if(S.on===o&&o.cd!=null){o.cd--;tick()}},1000)}
+tick()},
+start:function(){if(S.on&&S.on.host){act.countdown();return}S.codes=null;if(S.manual){S.assign=S.names.map(function(n){return{name:n.trim(),role:""}});S.step=16;return}S.seed=Math.floor(Math.random()*2147483647);S.assign=dealSeed(S.names.map(function(x){return x.trim()}),S.pick,S.seed);S.ri=0;S.shown=false;S.dead={};newGame();S.step=3},
 show:function(){S.shown=true},
 hide:function(){S.shown=false;S.ri++},
 restart:function(){unwatch();S.on=null;S.step=20;S.assign=[]},

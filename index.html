@@ -125,17 +125,17 @@ function saveSet(){try{localStorage.setItem("mafia_set",JSON.stringify({lang:S.l
 var LN={en:"English",bs:"Bosanski / Srpski",es:"Español",de:"Deutsch"};
 var VL={en:["en"],bs:["bs","sr","hr"],es:["es"],de:["de"]};
 var TR={
-en:{close:"Night {n}. Everyone, close your eyes.",day:"The sun has come up. Everyone, wake up!",wake:"{r}, wake up. ",sleep:"{r}, close your eyes.",s:{cupid:["Cupid","Choose two players to fall in love."],escort:["Escort","Choose who to distract."],mafia:["Mafia","Choose who to eliminate."],framer:["Framer","Choose who to frame."],silencer:["Silencer","Choose who to silence."],doctor:["Doctor","Choose who to save."],bodyguard:["Bodyguard","Choose who to guard."],officer:["Officer","Choose who to arrest."],vigilante:["Vigilante","Choose who to shoot. Once per game."],detective:["Detective","Choose who to investigate."],tracker:["Tracker","Choose who to follow."]}},
-bs:{close:"Noć {n}. Svi zatvorite oči.",day:"Sunce je izašlo. Svi se probudite!",wake:"{r}, probudi se. ",sleep:"{r}, zatvori oči.",s:{cupid:["Kupidon","Izaberi dva igrača koja će se zaljubiti."],escort:["Zavodnica","Izaberi koga ćeš omesti."],mafia:["Mafija","Izaberite koga ćete eliminisati."],framer:["Podmetač","Izaberi koga ćeš namjestiti."],silencer:["Utišivač","Izaberi koga ćeš ušutkati."],doctor:["Doktor","Izaberi koga ćeš spasiti."],bodyguard:["Tjelohranitelj","Izaberi koga ćeš čuvati."],officer:["Policajac","Izaberi koga ćeš uhapsiti."],vigilante:["Osvetnik","Izaberi koga ćeš upucati. Samo jednom u igri."],detective:["Detektiv","Izaberi koga ćeš istražiti."],tracker:["Tragač","Izaberi koga ćeš pratiti."]}},
-es:{close:"Noche {n}. Todos, cierren los ojos.",day:"Ha salido el sol. ¡Todos, despierten!",wake:"{r}, despierta. ",sleep:"{r}, cierra los ojos.",s:{cupid:["Cupido","Elige a dos jugadores que se enamorarán."],escort:["Acompañante","Elige a quién distraer."],mafia:["Mafia","Elijan a quién eliminar."],framer:["Incriminador","Elige a quién incriminar."],silencer:["Silenciador","Elige a quién silenciar."],doctor:["Doctor","Elige a quién salvar."],bodyguard:["Guardaespaldas","Elige a quién proteger."],officer:["Oficial","Elige a quién arrestar."],vigilante:["Justiciero","Elige a quién disparar. Solo una vez."],detective:["Detective","Elige a quién investigar."],tracker:["Rastreador","Elige a quién seguir."]}},
-de:{close:"Nacht {n}. Alle schließen die Augen.",day:"Die Sonne ist aufgegangen. Alle wachen auf!",wake:"{r}, wach auf. ",sleep:"{r}, schließ die Augen.",s:{cupid:["Amor","Wähle zwei Spieler, die sich verlieben."],escort:["Begleiterin","Wähle, wen du ablenkst."],mafia:["Mafia","Wählt, wen ihr eliminiert."],framer:["Fälscher","Wähle, wen du belastest."],silencer:["Schweiger","Wähle, wen du zum Schweigen bringst."],doctor:["Arzt","Wähle, wen du rettest."],bodyguard:["Leibwächter","Wähle, wen du beschützt."],officer:["Polizist","Wähle, wen du verhaftest."],vigilante:["Rächer","Wähle, wen du erschießt. Nur einmal im Spiel."],detective:["Detektiv","Wähle, wen du untersuchst."],tracker:["Spurenleser","Wähle, wen du verfolgst."]}}};
+en:{close:"Night {n}. Everyone, close your eyes.",day:"The sun has come up. Everyone, wake up!",wake:"{r}, wake up. ",sleep:"{r}, close your eyes.",s:{cupid:["Cupid","Choose two players to fall in love."],escort:["Escort","Choose who to distract."],mafia:["Mafia","Choose who to kill."],framer:["Framer","Choose who to frame."],silencer:["Silencer","Choose who to silence."],doctor:["Doctor","Choose who to save."],bodyguard:["Bodyguard","Choose who to guard."],officer:["Officer","Choose who to arrest."],vigilante:["Vigilante","Choose who to shoot. Once per game."],detective:["Detective","Choose who to investigate."],tracker:["Tracker","Choose who to follow."]}},
+bs:{close:"Noć {n}. Svi zatvorite oči.",day:"Sunce je izašlo. Svi se probudite!",wake:"{r}, probudi se. ",sleep:"{r}, zatvori oči.",s:{cupid:["Kupidon","Izaberi dva igrača koja će se zaljubiti."],escort:["Zavodnica","Izaberi koga ćeš omesti."],mafia:["Mafija","Izaberite koga ćete ubiti."],framer:["Podmetač","Izaberi koga ćeš namjestiti."],silencer:["Utišivač","Izaberi koga ćeš ušutkati."],doctor:["Doktor","Izaberi koga ćeš spasiti."],bodyguard:["Tjelohranitelj","Izaberi koga ćeš čuvati."],officer:["Policajac","Izaberi koga ćeš uhapsiti."],vigilante:["Osvetnik","Izaberi koga ćeš upucati. Samo jednom u igri."],detective:["Detektiv","Izaberi koga ćeš istražiti."],tracker:["Tragač","Izaberi koga ćeš pratiti."]}},
+es:{close:"Noche {n}. Todos, cierren los ojos.",day:"Ha salido el sol. ¡Todos, despierten!",wake:"{r}, despierta. ",sleep:"{r}, cierra los ojos.",s:{cupid:["Cupido","Elige a dos jugadores que se enamorarán."],escort:["Acompañante","Elige a quién distraer."],mafia:["Mafia","Elijan a quién matar."],framer:["Incriminador","Elige a quién incriminar."],silencer:["Silenciador","Elige a quién silenciar."],doctor:["Doctor","Elige a quién salvar."],bodyguard:["Guardaespaldas","Elige a quién proteger."],officer:["Oficial","Elige a quién arrestar."],vigilante:["Justiciero","Elige a quién disparar. Solo una vez."],detective:["Detective","Elige a quién investigar."],tracker:["Rastreador","Elige a quién seguir."]}},
+de:{close:"Nacht {n}. Alle schließen die Augen.",day:"Die Sonne ist aufgegangen. Alle wachen auf!",wake:"{r}, wach auf. ",sleep:"{r}, schließ die Augen.",s:{cupid:["Amor","Wähle zwei Spieler, die sich verlieben."],escort:["Begleiterin","Wähle, wen du ablenkst."],mafia:["Mafia","Wählt, wen ihr tötet."],framer:["Fälscher","Wähle, wen du belastest."],silencer:["Schweiger","Wähle, wen du zum Schweigen bringst."],doctor:["Arzt","Wähle, wen du rettest."],bodyguard:["Leibwächter","Wähle, wen du beschützt."],officer:["Polizist","Wähle, wen du verhaftest."],vigilante:["Rächer","Wähle, wen du erschießt. Nur einmal im Spiel."],detective:["Detektiv","Wähle, wen du untersuchst."],tracker:["Spurenleser","Wähle, wen du verfolgst."]}}};
 var lastSp="";function speak(t,k){if(!S.tts||k===lastSp)return;lastSp=k;try{if(window.speechSynthesis){speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t),ps=VL[S.lang]||["en"],vs=speechSynthesis.getVoices(),v=null;
 for(var a=0;a<ps.length&&!v;a++)v=vs.filter(function(x){return x.lang.replace("_","-").toLowerCase().indexOf(ps[a])==0})[0];
 if(v){u.voice=v;u.lang=v.lang}else u.lang=ps[0];speechSynthesis.speak(u)}}catch(e){}}
 
 var G={rev:{}};S.cur=null;
 function isMaf(r){return r=="mafia"||r=="godfather"||r=="framer"||r=="silencer"}
-var NIGHT=[{k:"cupid",g:["cupid"],t:"Choose two players to fall in love",first:1,need:2},{k:"escort",g:["escort"],t:"Choose who to distract"},{k:"mafia",g:["mafia","godfather","framer","silencer"],t:"Choose who to eliminate"},{k:"framer",g:["framer"],t:"Choose who to frame"},{k:"silencer",g:["silencer"],t:"Choose who to silence"},{k:"doctor",g:["doctor"],t:"Choose who to save"},{k:"bodyguard",g:["bodyguard"],t:"Choose who to guard"},{k:"officer",g:["officer"],t:"Choose who to arrest"},{k:"vigilante",g:["vigilante"],t:"Choose who to shoot (once per game)"},{k:"detective",g:["detective"],t:"Choose who to investigate"},{k:"tracker",g:["tracker"],t:"Choose who to follow"}];
+var NIGHT=[{k:"cupid",g:["cupid"],t:"Choose two players to fall in love",first:1,need:2},{k:"escort",g:["escort"],t:"Choose who to distract"},{k:"framer",g:["framer"],t:"Choose who to frame"},{k:"silencer",g:["silencer"],t:"Choose who to silence"},{k:"mafia",g:["mafia","godfather","framer","silencer"],t:"Choose who to kill"},{k:"doctor",g:["doctor"],t:"Choose who to save"},{k:"bodyguard",g:["bodyguard"],t:"Choose who to guard"},{k:"officer",g:["officer"],t:"Choose who to arrest"},{k:"vigilante",g:["vigilante"],t:"Choose who to shoot (once per game)"},{k:"detective",g:["detective"],t:"Choose who to investigate"},{k:"tracker",g:["tracker"],t:"Choose who to follow"}];
 function holders(g){var o=[];S.assign.forEach(function(q,i){if(G.alive[i]&&g.indexOf(q.role)>-1)o.push(i)});return o}
 function newGame(){G={alive:S.assign.map(function(){return true}),night:0,rev:{},act:{},lovers:null,sel:[],ph:"close",oi:-1,order:[],rep:null,vph:"pick",vres:[],win:null,vigUsed:false,silenced:null};S.cur=null}
 function die(i){var o=[i];G.alive[i]=false;if(G.lovers&&G.lovers.indexOf(i)>-1){var w=G.lovers[0]==i?G.lovers[1]:G.lovers[0];if(G.alive[w]){G.alive[w]=false;o.push(w)}}return o}
@@ -173,7 +173,9 @@ h=steps()+"<h1>How many players?</h1><p>Select the number of people joining the 
 for(var i=4;i<=12;i++)h+='<button class="num'+(S.n==i?" sel":"")+'" data-n="'+i+'">'+i+"</button>";
 h+="</div><p style='margin-top:18px'>More players (13–50):</p><div class='grid small'>";
 for(i=13;i<=50;i++)h+='<button class="num'+(S.n==i?" sel":"")+'" data-n="'+i+'">'+i+"</button>";
-h+="</div>"+bar("menu","toNames","Continue to names");
+h+="</div>";
+if(S.custom)h+='<h2 style="margin:18px 0 6px">Custom player count</h2><label class="name"><span class="lb">Players</span><input id="ccount" type="number" inputmode="numeric" min="4" max="200" placeholder="4 to 200" value="'+(S.n>50?S.n:"")+'"></label><button class="btn alt" data-a="setCustom" style="width:100%">Use this number</button>';
+h+=bar("menu","toNames","Continue to names");
 
 if(S.saved)h=h.replace("</div><div class=\"bar\">","</div><div class=\"bar\">");
 if(S.saved)h+='<p style="margin-top:16px"><button class="btn alt" data-a="loadGroup" style="width:100%">Load saved group ('+S.saved.length+" players)</button></p>";
@@ -182,6 +184,7 @@ var d=dups();
 h=steps()+"<h1>Enter player names</h1><p>Each name must be unique.</p>";
 for(var j=0;j<S.n;j++){var v=S.names[j]||"";var dp=d[v.trim().toLowerCase()];
 h+='<label class="name'+(dp?" dup":"")+'"><span>'+(j+1)+'</span><input data-i="'+j+'" value="'+esc(v)+'" placeholder="Player '+(j+1)+'" maxlength="20" autocomplete="off"></label>'}
+h+='<p style="text-align:center;margin-top:12px">'+(S.filled?'<button class="btn alt" data-a="clearNames">🗑️ Clear all names</button>':'<button class="btn alt" data-a="autoNames">🎲 Auto fill names</button>')+'</p>';
 h+=bar("toPlayers","toRoles","Continue to roles",!namesOk());
 }else if(S.step==2){
 var t=total();
@@ -196,7 +199,7 @@ h+='<p style="text-align:center"><button class="btn alt" data-a="fill">Auto bala
 h+=bar(S.on?"toLobby":"toNames","start",S.on?"Deal roles":(S.manual?"Choose who is who":"Start game"),t!=S.n||mafCount()<1||mafCount()>mafMax(S.n));
 }else if(S.step==20){
 h='<div class="top"><div class="set"><select id="lang" aria-label="Voice language">'+Object.keys(LN).map(function(c){return'<option value="'+c+'"'+(S.lang==c?" selected":"")+">"+LN[c]+"</option>"}).join("")+'</select><button class="btn alt tiny" data-a="tts" aria-label="Toggle voice">'+(S.tts?"🔊 On":"🔇 Off")+'</button></div><button class="btn alt tiny" data-a="premium">'+(S.prem?"⭐ On":"⭐ Premium")+'</button></div>';
-h+='<div class="reveal" style="padding:36px 0 20px"><div class="big" style="font-size:64px">🎭</div><h1>Mafia Game App</h1><p>The classic party game. One phone runs the night.</p><p style="font-size:12px;margin:0">Version 7</p></div>';
+h+='<div class="reveal" style="padding:36px 0 20px"><div class="big" style="font-size:64px">🎭</div><h1>Mafia Game App</h1><p>The classic party game. One phone runs the night.</p></div>';
 h+='<button class="btn" data-a="localPass" style="width:100%;margin-bottom:4px">🏠 Local game</button><p style="margin:0 0 18px">Everyone plays on this one phone. Enter the names, pick the roles, and they are dealt randomly. Pass the phone around.</p>';h+='<button class="btn" data-a="local" style="width:100%;margin-bottom:4px">🌐 Online game (host)</button><p style="margin:0 0 18px">Friends use their own phones. You enter the names and pick each person\'s role. Each friend gets a 4-digit code.</p>';h+='<div style="height:8px"></div><button class="btn alt" data-a="enterCode" style="width:100%;margin-bottom:4px">🔑 Join a room</button><p style="margin:0">Friend? Type the 4-digit code the host sent you.</p>';
 }else if(S.step==3){
 if(S.cur==null){
@@ -351,6 +354,12 @@ showMine:function(){S.on.show=true;S.read=false},hideMine:function(){S.on.show=f
 
 toPlayers:function(){S.step=0},
 toNames:function(){syncNames();S.step=1},
+setCustom:function(){var v=parseInt(document.getElementById("ccount").value,10);if(!v||v<4||v>200){alert("Enter a number from 4 to 200.");return}S.n=v;S.pick={}},
+autoNames:function(){var pool=["Alex","Sam","Jordan","Riley","Morgan","Casey","Taylor","Jamie","Avery","Quinn","Drew","Blake","Cameron","Dana","Elliot","Finn","Gray","Harper","Indy","Jules","Kai","Lee","Max","Noel","Parker","Reese","Sage","Toby","Val","Wren","Zane","Ash","Bailey","Charlie","Devon","Emery","Frankie","Glen","Hayden","Jesse","Kit","Logan","Mika","Nico","Oakley","Pat","Robin","Skye","Tate","Uri"];
+var used={};S.names.forEach(function(x){var k=(x||"").trim().toLowerCase();if(k)used[k]=1});
+var free=shuffle(pool.filter(function(x){return!used[x.toLowerCase()]}));
+for(var i=0;i<S.n;i++){var cur=(S.names[i]||"").trim();if(cur)continue;var nm=free.pop();if(!nm){var c=i+1;while(used["player "+c])c++;nm="Player "+c}used[nm.toLowerCase()]=1;S.names[i]=nm}S.filled=true},
+clearNames:function(){S.names=[];syncNames();S.filled=false},
 toRoles:function(){if(total()!=S.n)S.pick=auto(S.n);S.step=2},
 loadGroup:function(){S.n=S.saved.length;S.names=S.saved.slice();S.step=1},
 fill:function(){S.pick=auto(S.n)},
@@ -368,7 +377,7 @@ if(v===CODE){S.prem=true;S.modal=false;S.err="";savePrem(true);}else S.err="That
 };
 $.addEventListener("click",function(e){
 var b=e.target.closest("button");if(!b)return;var d=b.dataset;
-if(d.n){S.n=+d.n;S.pick={}}
+if(d.n){S.n=+d.n;S.pick={};S.seq=(S.seq||[]).concat(+d.n).slice(-6);if(S.seq.join(",")=="6,7,6,7,6,7")S.custom=true}
 else if(d.a&&act[d.a]){act[d.a]()}
 else if(d.r){var r=R[d.r];
 if(r.pre&&!S.prem){S.modal=true}

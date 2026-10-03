@@ -191,13 +191,13 @@ var on=!!S.pick[r.id],locked=r.pre&&!S.prem;
 h+='<div class="role'+(on?" on":"")+'"><button class="dot" data-r="'+r.id+'" style="background:'+r.c+'33;border:0" aria-label="Toggle '+r.n+'">'+r.e+'</button><div class="t"><b>'+r.n+"</b>"+(locked?'<span class="lock">🔒 Premium</span>':"")+"<small>"+r.d+"</small></div>";
 if(on&&r.multi&&!r.req||on&&r.multi)h+='<div class="step"><button data-m="'+r.id+'" data-d="-1">−</button><b>'+S.pick[r.id]+'</b><button data-m="'+r.id+'" data-d="1">+</button></div>';
 h+="</div>"});
-h+='<h2 style="margin:6px 0 6px">Who gets which role?</h2><div style="display:flex;gap:8px;margin-bottom:12px"><button class="opt'+(S.manual?"":" sel")+'" data-a="manOff" style="margin:0;text-align:center">🎲 Random</button><button class="opt'+(S.manual?" sel":"")+'" data-a="manOn" style="margin:0;text-align:center">✋ I choose</button></div>';
+if(S.mode!="pass")h+='<h2 style="margin:6px 0 6px">Who gets which role?</h2><div style="display:flex;gap:8px;margin-bottom:12px"><button class="opt'+(S.manual?"":" sel")+'" data-a="manOff" style="margin:0;text-align:center">🎲 Random</button><button class="opt'+(S.manual?" sel":"")+'" data-a="manOn" style="margin:0;text-align:center">✋ I choose</button></div>';
 h+='<p style="text-align:center"><button class="btn alt" data-a="fill">Auto balance</button> <button class="btn alt" data-a="save">Save this group</button></p>';
 h+=bar(S.on?"toLobby":"toNames","start",S.on?"Deal roles":(S.manual?"Choose who is who":"Start game"),t!=S.n||mafCount()<1||mafCount()>mafMax(S.n));
 }else if(S.step==20){
 h='<div class="top"><div class="set"><select id="lang" aria-label="Voice language">'+Object.keys(LN).map(function(c){return'<option value="'+c+'"'+(S.lang==c?" selected":"")+">"+LN[c]+"</option>"}).join("")+'</select><button class="btn alt tiny" data-a="tts" aria-label="Toggle voice">'+(S.tts?"🔊 On":"🔇 Off")+'</button></div><button class="btn alt tiny" data-a="premium">'+(S.prem?"⭐ On":"⭐ Premium")+'</button></div>';
-h+='<div class="reveal" style="padding:36px 0 20px"><div class="big" style="font-size:64px">🎭</div><h1>Mafia Game App</h1><p>The classic party game. One phone runs the night.</p><p style="font-size:12px;margin:0">Version 6 (host picks roles)</p></div>';
-h+='<button class="btn" data-a="local" style="width:100%;margin-bottom:6px">Host a game</button><p style="margin:0 0 16px">You run the game and send each friend a private link to their own phone.</p>';h+='<button class="btn alt" data-a="localPass" style="width:100%;margin-bottom:6px">Pass and play</button><p style="margin:0 0 16px">Everyone plays on this one phone. Pass it around to see roles.</p>';h+='<button class="btn alt" data-a="enterCode" style="width:100%;margin-bottom:6px">Enter my code</button><p style="margin:0">Friend? Type the 4-digit code the host gave you.</p>';
+h+='<div class="reveal" style="padding:36px 0 20px"><div class="big" style="font-size:64px">🎭</div><h1>Mafia Game App</h1><p>The classic party game. One phone runs the night.</p><p style="font-size:12px;margin:0">Version 7</p></div>';
+h+='<button class="btn" data-a="localPass" style="width:100%;margin-bottom:4px">🏠 Local game</button><p style="margin:0 0 18px">Everyone plays on this one phone. Enter the names, pick the roles, and they are dealt randomly. Pass the phone around.</p>';h+='<button class="btn" data-a="local" style="width:100%;margin-bottom:4px">🌐 Online game (host)</button><p style="margin:0 0 18px">Friends use their own phones. You enter the names and pick each person\'s role. Each friend gets a 4-digit code.</p>';h+='<div style="height:8px"></div><button class="btn alt" data-a="enterCode" style="width:100%;margin-bottom:4px">🔑 Join a room</button><p style="margin:0">Friend? Type the 4-digit code the host sent you.</p>';
 }else if(S.step==3){
 if(S.cur==null){
 var nr=Object.keys(G.rev).length,all=nr==S.assign.length;
@@ -205,7 +205,7 @@ h="<h1>Reveal roles</h1><p>Pass the phone to each player. Tap your name to see y
 S.assign.forEach(function(p,i){h+='<button class="tile'+(G.rev[i]?" done":"")+'" data-t="'+i+'">'+esc(p.name)+(G.rev[i]?" ✓":"")+"</button>"});
 h+="</div>";
 if(S.mode!="pass"){
-h+="<h2 style='margin:18px 0 4px'>Friends on their own phones</h2><p style='margin:0 0 8px'>Send each friend their OWN private link (one-to-one chat, not the group). It shows only their role, and works once: after they memorize it, it locks.</p>";h+="<h2 style='margin:12px 0 4px'>Backup: private codes</h2><p style='margin:0 0 8px'>Each friend opens this app on their own phone, taps Enter my code, and types their code. Keep the codes private.</p>";
+h+="<h2 style='margin:18px 0 4px'>Online game: send each friend their code</h2><p style='margin:0 0 8px'>Message each friend ONLY their own code (not in the group chat). They tap Join a room, type it, and see only their role.</p>";h+="<h2 style='margin:12px 0 4px'>Codes</h2><p style='margin:0 0 8px'>Each friend opens this app on their own phone, taps Enter my code, and types their code. Keep the codes private.</p>";
 if(!S.codes||S.codes.length!=S.assign.length)S.codes=S.assign.map(function(q){var ix=ROLES.map(function(r){return r.id}).indexOf(q.role);return String(Math.floor(Math.random()*555)*ROLES.length+ix).padStart(4,"0")});
 S.assign.forEach(function(p,i){h+='<div class="pl"><span>'+esc(p.name)+'</span><b style="letter-spacing:3px">'+S.codes[i]+'</b><button data-sh="'+i+'">Send link</button></div>'});
 }
@@ -257,7 +257,7 @@ h="<div class='reveal'><div class='big'>🔒</div><h1>Role already viewed</h1><p
 }else if(S.step==15){
 h="<h1>Find your role</h1><p>Type your name exactly as the host entered it. Make sure nobody is looking.</p><label class='name'><span class='lb'>Name</span><input id='fname' placeholder='Your name' maxlength='20' autocomplete='off'></label><p class='err'>"+esc(S.oerr)+"</p><button class='btn' data-a='useName' style='width:100%'>Show my role</button>";
 }else if(S.step==14){
-h="<h1>Enter my code</h1><p>Type the 4-digit code the host gave you. Make sure nobody is looking.</p><label class='name'><span class='lb'>Code</span><input id='pcode' placeholder='4-digit code' inputmode='numeric' maxlength='4' autocomplete='off'></label><p class='err'>"+esc(S.oerr)+"</p><button class='btn' data-a='useCode' style='width:100%'>Show my role</button><div class='bar'><div><button class='btn alt' data-a='restart' style='flex:1'>Back</button></div></div>";
+h="<h1>Join a room</h1><p>Type the 4-digit code the host gave you. Make sure nobody is looking.</p><label class='name'><span class='lb'>Code</span><input id='pcode' placeholder='4-digit code' inputmode='numeric' maxlength='4' autocomplete='off'></label><p class='err'>"+esc(S.oerr)+"</p><button class='btn' data-a='useCode' style='width:100%'>Show my role</button><div class='bar'><div><button class='btn alt' data-a='restart' style='flex:1'>Back</button></div></div>";
 }else if(S.step==10){
 h="<h1>Play online</h1><p>This phone hosts and moderates. Everyone else joins on their own phone with the 4-digit room code.</p>";
 if(!RM){var cm={wait:"Checking your sign-in…",nocl:"Check result: this is a local copy of the file, not the published page. Open the published link below in your browser instead.",null:"Check result: the page opened from Claude, but online rooms are not available for this account or view. If you are signed in, the page owner may need to invite or share the page with you."}[S.chk]||"";
@@ -313,8 +313,8 @@ shareGame:function(){shareGame()},
 useName:function(){var v=(document.getElementById('fname').value||'').trim().toLowerCase();var g=S.game,ix=-1;g.n.forEach(function(n,i){if(n.trim().toLowerCase()==v)ix=i});if(ix<0){S.oerr='Name not found. Type it exactly as the host entered it.';return}S.on={code:'',host:false,role:dealSeed(g.n,g.p,g.s)[ix].role,show:false};S.oerr='';S.read=false;S.step=12},
 enterCode:function(){S.oerr='';S.step=14},
 useCode:function(){var v=(document.getElementById('pcode').value||'').replace(/\D/g,'');var n=+v;if(v.length!=4||n>554*ROLES.length+ROLES.length-1){S.oerr='That code is not valid.';return}S.on={code:'',host:false,role:ROLES[n%ROLES.length].id,show:false};S.oerr='';S.read=false;S.step=12},
-local:function(){S.on=null;S.mode='host';S.step=0},
-localPass:function(){S.on=null;S.mode='pass';S.step=0},
+local:function(){S.on=null;S.mode='host';S.manual=true;S.step=0},
+localPass:function(){S.on=null;S.mode='pass';S.manual=false;S.step=0},
 premium:function(){S.modal=true;S.err=""},
 memo:function(){G.rev[S.cur]=true;S.cur=null;S.read=false},
 reshuffle:function(){S.codes=null;S.seed=Math.floor(Math.random()*2147483647);S.assign=dealSeed(S.assign.map(function(q){return q.name}),S.pick,S.seed);newGame()},

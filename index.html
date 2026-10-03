@@ -174,7 +174,7 @@ for(var i=4;i<=12;i++)h+='<button class="num'+(S.n==i?" sel":"")+'" data-n="'+i+
 h+="</div><p style='margin-top:18px'>More players (13–50):</p><div class='grid small'>";
 for(i=13;i<=50;i++)h+='<button class="num'+(S.n==i?" sel":"")+'" data-n="'+i+'">'+i+"</button>";
 h+="</div>";
-if(S.custom)h+='<h2 style="margin:18px 0 6px">Custom player count</h2><label class="name"><span class="lb">Players</span><input id="ccount" type="number" inputmode="numeric" min="4" max="200" placeholder="4 to 200" value="'+(S.n>50?S.n:"")+'"></label><button class="btn alt" data-a="setCustom" style="width:100%">Use this number</button>';
+if(S.custom)h+='<h2 style="margin:18px 0 6px">Custom player count</h2><label class="name"><span class="lb">Players</span><input id="ccount" type="number" inputmode="numeric" min="1" max="200" placeholder="1 to 200" value="'+(S.n>50?S.n:"")+'"></label><button class="btn alt" data-a="setCustom" style="width:100%">Use this number</button>';
 h+=bar("menu","toNames","Continue to names");
 
 if(S.saved)h=h.replace("</div><div class=\"bar\">","</div><div class=\"bar\">");
@@ -200,7 +200,7 @@ h+=bar(S.on?"toLobby":"toNames","start",S.on?"Start":(S.manual?"Choose who is wh
 }else if(S.step==20){
 h='<div class="top"><div class="set"><select id="lang" aria-label="Voice language">'+Object.keys(LN).map(function(c){return'<option value="'+c+'"'+(S.lang==c?" selected":"")+">"+LN[c]+"</option>"}).join("")+'</select><button class="btn alt tiny" data-a="tts" aria-label="Toggle voice">'+(S.tts?"🔊 On":"🔇 Off")+'</button></div><button class="btn alt tiny" data-a="premium">'+(S.prem?"⭐ On":"⭐ Premium")+'</button></div>';
 h+='<div class="reveal" style="padding:36px 0 20px"><div class="big" style="font-size:64px">🎭</div><h1>Mafia Game App</h1><p>The classic party game. One phone runs the night.</p></div>';
-h+='<button class="btn" data-a="localPass" style="width:100%;margin-bottom:4px">🏠 Local game</button><p style="margin:0 0 18px">Everyone plays on this one phone. Enter the names, pick the roles, and they are dealt randomly. Pass the phone around.</p>';h+='<button class="btn" data-a="local" style="width:100%;margin-bottom:4px">🌐 Online game (host)</button><p style="margin:0 0 18px">Friends use their own phones. You enter the names and pick each person\'s role. Each friend gets a 4-digit code.</p>';h+='<button class="btn" data-a="onlineHome" style="width:100%;margin-bottom:4px">🛋️ Lobby (wait for friends)</button><p style="margin:0 0 18px">Open a room and wait while friends join from their own phones with a 4-digit code. Then deal the roles when everyone is in.</p>';h+='<div style="height:8px"></div><button class="btn alt" data-a="enterCode" style="width:100%;margin-bottom:4px">🔑 Join a room</button><p style="margin:0">Friend? Type the 4-digit code the host sent you.</p>';
+h+='<button class="btn" data-a="localPass" style="width:100%;margin-bottom:4px">🏠 Local game</button><p style="margin:0 0 18px">Everyone plays on this one phone. Enter the names, pick the roles, and they are dealt randomly. Pass the phone around.</p>';h+='<button class="btn" data-a="onlineHome" style="width:100%;margin-bottom:4px">🌐 Online game</button><p style="margin:0 0 18px">Everyone plays on their own phone. Open a lobby, wait while friends join with a 4-digit code, then start with a countdown.</p>';h+='<div style="height:8px"></div><button class="btn alt" data-a="onlineHome" style="width:100%;margin-bottom:4px">🔑 Join a room</button><p style="margin:0">Friend? Enter your name and the 4-digit lobby code from the host.</p>';
 }else if(S.step==3){
 if(S.cur==null){
 var nr=Object.keys(G.rev).length,all=nr==S.assign.length;
@@ -354,7 +354,7 @@ showMine:function(){S.on.show=true;S.read=false},hideMine:function(){S.on.show=f
 
 toPlayers:function(){S.step=0},
 toNames:function(){syncNames();S.step=1},
-setCustom:function(){var v=parseInt(document.getElementById("ccount").value,10);if(!v||v<4||v>200){alert("Enter a number from 4 to 200.");return}S.n=v;S.pick={}},
+setCustom:function(){var v=parseInt(document.getElementById("ccount").value,10);if(!v||v<1||v>200){alert("Enter a number from 1 to 200.");return}S.n=v;S.pick={}},
 autoNames:function(){var pool=["Alex","Sam","Jordan","Riley","Morgan","Casey","Taylor","Jamie","Avery","Quinn","Drew","Blake","Cameron","Dana","Elliot","Finn","Gray","Harper","Indy","Jules","Kai","Lee","Max","Noel","Parker","Reese","Sage","Toby","Val","Wren","Zane","Ash","Bailey","Charlie","Devon","Emery","Frankie","Glen","Hayden","Jesse","Kit","Logan","Mika","Nico","Oakley","Pat","Robin","Skye","Tate","Uri"];
 var used={};S.names.forEach(function(x){var k=(x||"").trim().toLowerCase();if(k)used[k]=1});
 var free=shuffle(pool.filter(function(x){return!used[x.toLowerCase()]}));
